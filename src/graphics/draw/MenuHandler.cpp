@@ -1966,6 +1966,64 @@ void menuHandler::BuzzerModeMenu()
     screen->showOverlayBanner(bannerOptions);
 }
 
+#if defined(USE_PCF8812)
+
+void menuHandler::BrightnessPickerMenu()
+{
+    static const char *optionsArray[] = {"Back", "Backlight +", "Backlight -", "Contrast +", "Contrast -", "Invert"};
+    
+    BannerOverlayOptions bannerOptions;
+    bannerOptions.message = "Brightness";
+    bannerOptions.optionsArrayPtr = optionsArray;
+    bannerOptions.optionsCount = 6;
+    bannerOptions.bannerCallback = [](int selected) -> void {
+        // read stored values
+        uint8_t brightness_val = uiconfig.screen_brightness;
+        uint8_t contrast_val = (uint8_t)(uiconfig.screen_rgb_color & 0xFF); // contrast from byte 0
+        uint8_t invert_val = (uint8_t)((uiconfig.screen_rgb_color >> 8) & 0xFF); // invert from byte 1
+        if (selected == 1) { // Backlight +
+            if (brightness_val <= 225) {
+                brightness_val += 25;
+            }
+        } else if (selected == 2) { // Backlight -
+            if (brightness_val >= 25) {
+                brightness_val -= 25; 
+            }
+        }else if (selected == 3) { // Contrast +
+            if (contrast_val <= 250) {
+                contrast_val += 5;                  
+            }
+        } else if (selected == 4) { // Contrast -
+            if (contrast_val >= 5) {
+                contrast_val -= 5;                    
+            }
+        } else if (selected == 5) { // Invert
+            if (invert_val == 0x0C){
+                invert_val = 0x0D;
+            }else{
+                invert_val = 0x0C;
+            }
+        }
+        if (selected != 0) { // Not "Back"
+            // Apply and save               
+            screen->getDisplayDevice()->setBrightness(brightness_val); 
+            static_cast<PCF8812 *>(screen->getDisplayDevice())->setContrast(contrast_val);
+            static_cast<PCF8812 *>(screen->getDisplayDevice())->setInvert(invert_val);
+            uiconfig.screen_brightness = brightness_val;
+            // storing all values in one unused setting
+            uiconfig.screen_rgb_color = ((uint32_t)0x00 << 24) | ((uint32_t)selected << 16) | ((uint32_t)invert_val << 8) | (uint32_t)contrast_val;
+            saveUIConfig();
+            LOG_INFO("Screen brightness/contrast/mode set to %d/%d/%d", brightness_val, contrast_val, invert_val);
+            menuHandler::menuQueue = menuHandler::BrightnessPicker;
+            screen->runNow();  
+        }
+    };
+    bannerOptions.InitialSelected = (uint8_t)((uiconfig.screen_rgb_color >> 16) & 0xFF); // store last clicked in in byte 2
+    screen->showOverlayBanner(bannerOptions);
+}
+
+#else
+
 void menuHandler::BrightnessPickerMenu()
 {
     static const char *optionsArray[] = {"Back", "Low", "Medium", "High"};
@@ -2013,6 +2071,8 @@ void menuHandler::BrightnessPickerMenu()
     bannerOptions.InitialSelected = currentSelection;
     screen->showOverlayBanner(bannerOptions);
 }
+
+#endif
 
 void menuHandler::switchToMUIMenu()
 {
@@ -2316,7 +2376,7 @@ void menuHandler::screenOptionsMenu()
 #if defined(T_DECK)
     // TDeck Doesn't seem to support brightness at all, at least not reliably
     bool hasSupportBrightness = false;
-#elif defined(ST7789_CS) || defined(USE_OLED) || defined(USE_SSD1306) || defined(USE_SH1106) || defined(USE_SH1107)
+#elif defined(ST7789_CS) || defined(USE_OLED) || defined(USE_SSD1306) || defined(USE_SH1106) || defined(USE_SH1107) || defined(USE_PCF8812)
     bool hasSupportBrightness = true;
 #else
     bool hasSupportBrightness = false;

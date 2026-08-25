@@ -82,6 +82,8 @@ class Screen
 #include <SSD1306Spi.h>
 #elif defined(USE_ST7796)
 #include <ST7796Spi.h>
+#elif defined(USE_PCF8812)
+#include "../graphics/niche/Drivers/LCD/PCF8812.h"
 #else
 // the SH1106/SSD1306 variant is auto-detected
 #include <AutoOLEDWire.h>
@@ -773,6 +775,8 @@ class Screen : public concurrency::OSThread
     /// Display device
 #ifdef USE_ST7789
     ST7789Spi *dispdev;
+#elif defined(USE_PCF8812)
+    PCF8812 *dispdev;
 #else
     OLEDDisplay *dispdev;
 #endif

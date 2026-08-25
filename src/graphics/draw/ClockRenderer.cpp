@@ -178,9 +178,17 @@ void drawDigitalClockFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int1
     snprintf(secondString, sizeof(secondString), "%02d", second);
 
     static bool scaleInitialized = false;
+
+    // just override this
+#if defined(USE_PCF8812)  
+    static float scale = 0.15f;
+    static float segmentWidth = SEGMENT_WIDTH * 0.15f;
+    static float segmentHeight = SEGMENT_HEIGHT * 0.15f;     
+#else 
     static float scale = 0.75f;
     static float segmentWidth = SEGMENT_WIDTH * 0.75f;
     static float segmentHeight = SEGMENT_HEIGHT * 0.75f;
+#endif 
 
     if (!scaleInitialized) {
 #ifdef DISPLAY_FORCE_SMALL_FONTS
