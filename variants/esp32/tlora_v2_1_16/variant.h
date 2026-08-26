@@ -2,6 +2,8 @@
 #define ADC_CHANNEL ADC1_GPIO35_CHANNEL
 #define BATTERY_SENSE_SAMPLES 30
 
+#define BUTTON_PIN 14
+
 // ratio of voltage divider = 2.0 (R42=100k, R43=100k)
 #define ADC_MULTIPLIER 2
 
