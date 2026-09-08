@@ -172,7 +172,7 @@ int CannedMessageModule::splitConfiguredMessages()
     int tempCount = 0;
     // Insert at position 0 (top)
     tempMessages[tempCount++] = "[Select Destination]";
-#if defined(USE_VIRTUAL_KEYBOARD)
+#if (defined(USE_VIRTUAL_KEYBOARD) || defined(INPUTBROKER_ANALOG_TYPE))
     // Add a "Free Text" entry at the top if using a touch screen virtual keyboard
     tempMessages[tempCount++] = "[-- Free Text --]";
 #else
@@ -460,7 +460,11 @@ int CannedMessageModule::handleInputEvent(const InputEvent *event)
             return 1;
         }
         // Printable char (ASCII) opens free text compose
+#ifdef INPUTBROKER_ANALOG_TYPE
+        if (event->kbchar >= 32) {
+#else
         if (event->kbchar >= 32 && event->kbchar <= 126) {
+#endif
             updateState(CANNED_MESSAGE_RUN_STATE_FREETEXT, true);
             UIFrameEvent e;
             e.action = UIFrameEvent::Action::REGENERATE_FRAMESET;
@@ -520,9 +524,14 @@ bool CannedMessageModule::isSelectEvent(const InputEvent *event)
 
 bool CannedMessageModule::handleTabSwitch(const InputEvent *event)
 {
+#ifdef INPUTBROKER_ANALOG_TYPE
+    if (event->inputEvent != INPUT_BROKER_UP_LONG)
+        return false;
+#else
     if (event->kbchar != 0x09)
         return false;
-
+#endif
+   
     const cannedMessageModuleRunState targetState = (runState == CANNED_MESSAGE_RUN_STATE_DESTINATION_SELECTION)
                                                         ? CANNED_MESSAGE_RUN_STATE_FREETEXT
                                                         : CANNED_MESSAGE_RUN_STATE_DESTINATION_SELECTION;
@@ -551,9 +560,13 @@ int CannedMessageModule::handleDestinationSelectionInput(const InputEvent *event
             isSelect = true;
         }
     }
-
+#ifdef INPUTBROKER_ANALOG_TYPE
+    if (event->kbchar >= 32 && !isUp && !isDown && event->inputEvent != INPUT_BROKER_LEFT &&
+        event->inputEvent != INPUT_BROKER_RIGHT && event->inputEvent != INPUT_BROKER_SELECT) {
+#else
     if (event->kbchar >= 32 && event->kbchar <= 126 && !isUp && !isDown && event->inputEvent != INPUT_BROKER_LEFT &&
         event->inputEvent != INPUT_BROKER_RIGHT && event->inputEvent != INPUT_BROKER_SELECT) {
+#endif
         this->searchQuery += (char)event->kbchar;
         needsUpdate = true;
         if ((millis() - lastFilterUpdate) > filterDebounceMs) {
@@ -729,7 +742,7 @@ bool CannedMessageModule::handleMessageSelectorInput(const InputEvent *event, bo
         }
 
         // [Free Text] triggers the free text input (virtual keyboard)
-#if defined(USE_VIRTUAL_KEYBOARD)
+#if (defined(USE_VIRTUAL_KEYBOARD) || defined(INPUTBROKER_ANALOG_TYPE))
         if (strcmp(current, "[-- Free Text --]") == 0) {
             updateState(CANNED_MESSAGE_RUN_STATE_FREETEXT, true);
             UIFrameEvent e;
@@ -819,6 +832,7 @@ bool CannedMessageModule::handleMessageSelectorInput(const InputEvent *event, bo
 
     return handled;
 }
+
 bool CannedMessageModule::handleFreeTextInput(const InputEvent *event)
 {
     // Always process only if in FREETEXT mode
@@ -904,6 +918,7 @@ bool CannedMessageModule::handleFreeTextInput(const InputEvent *event)
         screen->forceDisplay();
         return true;
     }
+
     // Confirm select (Enter)
     bool isSelect = isSelectEvent(event);
     if (isSelect) {
@@ -971,8 +986,48 @@ bool CannedMessageModule::handleFreeTextInput(const InputEvent *event)
         return handleTabSwitch(event); // Reuse tab logic
     }
 
+#ifdef INPUTBROKER_ANALOG_TYPE
+
+    if ((*(event->source + 0) == 'a') && (*(event->source + 1) == 'k') && (*(event->source + 2) == 'b'))  // update states
+    {
+        // substitute pointer for char array with states
+        // [ b_locked, b_idle, b_shift, c_primary, c_secondary, lang_c0, lang_c1, lang_c2 ]
+        akb_is_locked    = *(event->source + 3);
+        akb_is_idle      = *(event->source + 4);
+        akb_is_shift     = *(event->source + 5);
+        akb_pending[0]   = *(event->source + 6);
+        akb_pending[1]   = *(event->source + 7);
+        akb_pending[2]   = *(event->source + 8);
+        akb_pending[3]   = *(event->source + 9);
+        akb_pending[4]   = *(event->source + 10);
+        akb_pending[5]   = *(event->source + 11);
+        akb_pending[6]   = *(event->source + 12);
+        akb_pending[7]   = *(event->source + 13);
+        akb_pending[8]   = *(event->source + 14);
+        akb_pending[9]   = *(event->source + 15);                                
+        akb_pending[10]   = *(event->source + 16);
+        akb_pending[11]   = *(event->source + 17);
+        akb_lang         = *(event->source + 18); 
+        akb_lang_name[0] = *(event->source + 19);
+        akb_lang_name[1] = *(event->source + 20);
+        screen->forceDisplay();
+    }
+
+    if (event->inputEvent == INPUT_BROKER_UP_LONG) {
+        return handleTabSwitch(event); // Reuse tab logic
+    }
+
+    if (event->inputEvent == INPUT_BROKER_DOWN_LONG) {
+        updateState(CANNED_MESSAGE_RUN_STATE_EMOTE_PICKER);
+        screen->forceDisplay();
+        return true;
+    }
+
+    if (event->kbchar >= 32 ) {
+#else
     // Printable ASCII (add char to draft)
     if (event->kbchar >= 32 && event->kbchar <= 126) {
+#endif
         payload = event->kbchar;
         lastTouchMillis = millis();
         runOnce();
@@ -1369,7 +1424,11 @@ int32_t CannedMessageModule::runOnce()
                 break;
             default:
                 // Only insert ASCII printable characters (32–126)
+#ifdef INPUTBROKER_ANALOG_TYPE
+                if (this->payload >= 32 ) { // why tho?
+#else
                 if (this->payload >= 32 && this->payload <= 126) {
+#endif
                     requestFocus();
                     if (this->cursor == this->freetext.length()) {
                         this->freetext += (char)this->payload;
@@ -1663,6 +1722,154 @@ void CannedMessageModule::drawEnterIcon(OLEDDisplay *display, int x, int y, floa
     }
 }
 
+#elif (defined(INPUTBROKER_ANALOG_TYPE) && defined(USE_PCF8812))
+
+// returns how much chars from begining fit in maxWidth
+static uint16_t FitChars(OLEDDisplay *display, String *inStr, uint16_t maxWidth)
+{
+    const char *line = inStr->c_str();
+    size_t lineLen = strlen(line);
+    uint16_t fitWidth = 0;
+  
+    if (!line)
+        return 0;
+
+    for (size_t i = 0; i < lineLen;) {
+        
+        size_t matchLen = 0;
+        const graphics::Emote *matched = graphics::EmoteRenderer::findEmoteAt(line, lineLen, i, matchLen, graphics::emotes, graphics::numEmotes);
+        if (matched) {
+            if (display)
+                fitWidth = fitWidth + matched->width + 2;
+            i = i + matchLen;
+            if(fitWidth >= maxWidth)
+                return i;
+            continue;
+        }
+        
+        // Skip modifiers that do not change which bitmap we render.
+        if (i + 2 < lineLen && static_cast<uint8_t>(line[i]) == 0xEF && static_cast<uint8_t>(line[i + 1]) == 0xB8 && static_cast<uint8_t>(line[i + 2]) == 0x8F)
+            i = i + 3;
+        if (i + 3 < lineLen && static_cast<uint8_t>(line[i]) == 0xF0 && static_cast<uint8_t>(line[i + 1]) == 0x9F && static_cast<uint8_t>(line[i + 2]) == 0x8F && (static_cast<uint8_t>(line[i + 3]) >= 0xBB && static_cast<uint8_t>(line[i + 3]) <= 0xBF))
+            i = i + 4;
+
+        const size_t charLen = graphics::EmoteRenderer::utf8CharLen(static_cast<uint8_t>(line[i]));
+        size_t len = charLen;
+        char chunk[5] = {0, 0, 0, 0, 0};
+        if (len > 4)
+            len = 4;
+        memcpy(chunk, line + i, len);            
+    #if defined(OLED_UA) || defined(OLED_RU)
+        fitWidth = fitWidth + display->getStringWidth(chunk, len, true);
+    #else
+        (void)len;
+        fitWidth = fitWidth + display->getStringWidth(chunk);
+    #endif   
+        i = i + charLen;
+        if(fitWidth >= maxWidth)
+            return i - charLen;
+    }
+
+    return lineLen;
+}
+
+void CannedMessageModule::drawAnalogFreeText(OLEDDisplay *display, int16_t x, int16_t y, char *buffer)
+{
+
+// Draw node/channel header at the top
+    display->setTextAlignment(TEXT_ALIGN_LEFT);
+    display->setFont(FONT_SMALL);
+    display->setColor(WHITE);
+    drawHeader(display, 0, 0, buffer);
+    display->drawHorizontalLine(0,FONT_HEIGHT_SMALL,display->getWidth());
+
+// Draw fitedinput text
+    // Prepare text parts
+    String str_bef_cur = this->freetext.substring(0, this->cursor) + "_";
+    String str_aft_cur = this->freetext.substring(this->cursor);
+    // text parts sizes
+    graphics::EmoteRenderer::LineMetrics line_metrics = graphics::EmoteRenderer::analyzeLine(display, str_bef_cur.c_str(), FONT_HEIGHT_SMALL, graphics::emotes, graphics::numEmotes, 2);
+    uint16_t bef_cur_len_px = line_metrics.width;
+    uint16_t max_height = line_metrics.tallestHeight;
+    line_metrics = graphics::EmoteRenderer::analyzeLine(display, str_aft_cur.c_str(), FONT_HEIGHT_SMALL, graphics::emotes, graphics::numEmotes, 2);
+    uint16_t aft_cur_len_px = line_metrics.width;
+    max_height = max(max_height, line_metrics.tallestHeight);
+    uint16_t out_len_px = bef_cur_len_px + aft_cur_len_px;
+    uint16_t max_len_px = 2 * display->getWidth(); // fixed available space as we do only for PCF8812
+
+    String msgWithCursor;
+    if (out_len_px <= 2 * display->getWidth())
+    { // draw if everything fits
+        msgWithCursor = str_bef_cur + str_aft_cur;
+        drawWrappedEmoteText(display, 0, FONT_HEIGHT_SMALL, msgWithCursor.c_str(), display->getWidth(), FONT_HEIGHT_SMALL);
+    }
+    else
+    { // need to cut something
+        String strBuff;
+        int16_t fitChars;
+        if (bef_cur_len_px >= max_len_px)
+        { // cut before cursor if it does not fit
+            uint16_t not_fit_len_px = bef_cur_len_px - max_len_px; // how much pixels of bef_cur_len_px don't fit in max_len_px
+            fitChars = FitChars(display, &str_bef_cur, not_fit_len_px); // how much chars from start fit in "unfit" pixels
+            strBuff = str_bef_cur.substring(fitChars + 3); // with assumption that max_len_px fits >5 chars
+            str_bef_cur = "..." + strBuff;
+            drawWrappedEmoteText(display, 0, FONT_HEIGHT_SMALL, str_bef_cur.c_str(), display->getWidth(), FONT_HEIGHT_SMALL);
+        }
+        else
+        {
+            max_len_px = max_len_px - bef_cur_len_px;
+            if (aft_cur_len_px > max_len_px)
+            { // cut after cursor if it does not fit
+                fitChars = FitChars(display, &str_aft_cur, max_len_px); // how much chars from start fit in max_len_px
+                fitChars = max(0, fitChars - 2); // can drop in negatives here
+                strBuff = str_aft_cur.substring(0, fitChars);
+                msgWithCursor = str_bef_cur + strBuff + "...";
+                drawWrappedEmoteText(display, 0, FONT_HEIGHT_SMALL, msgWithCursor.c_str(), display->getWidth(), FONT_HEIGHT_SMALL);
+            }  
+        }
+    }
+
+// draw status
+    
+    display->drawHorizontalLine(0,display->getHeight() - FONT_HEIGHT_SMALL,display->getWidth());
+
+    String akb_stat = " ";
+    if(akb_is_locked)
+    {
+       akb_stat = "hold # to unlock";
+       display->drawString(0, display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
+    }
+    else
+    {
+        if(akb_is_idle)
+        {
+            akb_stat = "press any key";
+            display->drawString(0, display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
+        }
+        else
+        {
+            // button chars
+            for (uint8_t i=0; i<12; i=i+1)
+            {
+                if (akb_pending[i] != 0x00)
+                    akb_stat = akb_stat + String(akb_pending[i]);
+            }            
+            display->drawString(0, display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
+            
+            // language and message size
+            uint16_t charsLeft = meshtastic_Constants_DATA_PAYLOAD_LEN - this->freetext.length() - (moduleConfig.canned_message.send_bell ? 1 : 0);
+            if (akb_lang > 0)
+                charsLeft = charsLeft/2;
+            akb_stat = String(akb_lang_name[0]) + String(akb_lang_name[1]) + ": " + String(charsLeft);
+            if (akb_is_shift == 0)
+                akb_stat.toLowerCase();    
+            display->drawString(display->getWidth() - display->getStringWidth(akb_stat), display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
+        }
+    }
+        
+    return;    
+}
+
 #endif
 
 // Indicate to screen class that module is handling keyboard input specially (at certain times)
@@ -1929,6 +2136,8 @@ void CannedMessageModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *st
 #endif
 #if defined(USE_VIRTUAL_KEYBOARD)
         drawKeyboard(display, state, 0, 0);
+#elif (defined(INPUTBROKER_ANALOG_TYPE) && defined(USE_PCF8812))
+        drawAnalogFreeText(display, x, y, buffer);
 #else
         display->setTextAlignment(TEXT_ALIGN_LEFT);
         display->setFont(FONT_SMALL);

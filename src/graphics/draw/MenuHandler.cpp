@@ -620,10 +620,15 @@ void menuHandler::replyMenu()
     optionsEnumArray[options++] = ReplyPreset;
 
     // Freetext reply (only when keyboard exists)
+#if defined(INPUTBROKER_ANALOG_TYPE)
+    if (true) {
+#else
     if (kb_found) {
+#endif        
         optionsArray[options] = "With Freetext";
         optionsEnumArray[options++] = ReplyFreetext;
     }
+
 
     BannerOverlayOptions bannerOptions;
 
@@ -1984,18 +1989,26 @@ void menuHandler::BrightnessPickerMenu()
         if (selected == 1) { // Backlight +
             if (brightness_val <= 225) {
                 brightness_val += 25;
+            }else{
+                brightness_val = 255; 
             }
         } else if (selected == 2) { // Backlight -
             if (brightness_val >= 25) {
                 brightness_val -= 25; 
+            }else{
+                brightness_val = 0; 
             }
         }else if (selected == 3) { // Contrast +
             if (contrast_val <= 250) {
                 contrast_val += 5;                  
+            }else{
+                contrast_val = 25; 
             }
         } else if (selected == 4) { // Contrast -
             if (contrast_val >= 5) {
                 contrast_val -= 5;                    
+            }else{
+                contrast_val = 0; 
             }
         } else if (selected == 5) { // Invert
             if (invert_val == 0x0C){

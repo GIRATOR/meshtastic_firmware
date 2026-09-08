@@ -60,6 +60,10 @@ private:
     uint8_t this_flip;
     uint8_t this_mode;
 
+    #ifdef PCF8812_SCREENSAVER
+        const unsigned char screensaver[808] = PCF8812_SCREENSAVER;
+    #endif
+
     void PCF_HW_RESET()
     {
         delayMicroseconds(10);
@@ -211,7 +215,12 @@ public:
             {
                 for (x = displayWidth; x > 0; x--)
                 {
+#ifdef PCF8812_SCREENSAVER
+                    pos = x + (y * displayWidth) - 1;
+                    PCF_WRITE(screensaver[pos]);
+#else
                     PCF_WRITE(0x00);
+#endif
                     yield();
                 }
 #if (PCF8812_EXTRA_BYTE > 0)
@@ -257,15 +266,11 @@ public:
         sendInitCommands();
         // backlight
 #if (PCF8812_BL >= 0)
-#ifdef ESP_PLATFORM
-#if (PCF8812_BLSTATE == HIGH)
+    #if (PCF8812_BLSTATE == HIGH)
         analogWrite(PCF8812_BL, this_brightness);
-#else
+    #else
         analogWrite(PCF8812_BL, (255 - (this_brightness)));
-#endif
-#else
-        digitalWrite(PCF8812_BL, PCF8812_BLSTATE);
-#endif
+    #endif
 #endif
     }
 
@@ -275,15 +280,11 @@ public:
         display();
         // backlight
 #if (PCF8812_BL >= 0)
-#ifdef ESP_PLATFORM
-#if (PCF8812_BLSTATE == HIGH)
+    #if (PCF8812_BLSTATE == HIGH)
         analogWrite(PCF8812_BL, 0);
-#else
+    #else
         analogWrite(PCF8812_BL, 255);
-#endif
-#else
-        digitalWrite(PCF8812_BL, !PCF8812_BLSTATE);
-#endif
+    #endif
 #endif
     }
 
@@ -291,23 +292,10 @@ public:
     {
         this_brightness = new_brightness;
         // backlight
-#if (PCF8812_BL >= 0)
-#ifdef ESP_PLATFORM
 #if (PCF8812_BLSTATE == HIGH)
         analogWrite(PCF8812_BL, this_brightness);
 #else
         analogWrite(PCF8812_BL, (255 - this_brightness));
-#endif
-#else
-        if (this_brightness > 128)
-        {
-            digitalWrite(PCF8812_BL, PCF8812_BLSTATE);
-        }
-        else
-        {
-            digitalWrite(PCF8812_BL, !PCF8812_BLSTATE);
-        }
-#endif
 #endif
     }
 

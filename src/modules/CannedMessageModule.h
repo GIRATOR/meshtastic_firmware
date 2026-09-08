@@ -116,6 +116,8 @@ class CannedMessageModule : public SinglePortModule, public Observable<const UIF
     void drawShiftIcon(OLEDDisplay *display, int x, int y, float scale = 1);
     void drawBackspaceIcon(OLEDDisplay *display, int x, int y, float scale = 1);
     void drawEnterIcon(OLEDDisplay *display, int x, int y, float scale = 1);
+#elif (defined(INPUTBROKER_ANALOG_TYPE) && defined(USE_PCF8812))
+    void drawAnalogFreeText(OLEDDisplay *display, int16_t x, int16_t y, char *buffer);
 #endif
 
     // === Input Handling ===
@@ -181,6 +183,13 @@ class CannedMessageModule : public SinglePortModule, public Observable<const UIF
 #if defined(USE_VIRTUAL_KEYBOARD)
     bool shift = false;
     int charSet = 0; // 0=ABC, 1=123
+#elif defined(INPUTBROKER_ANALOG_TYPE)
+    bool akb_is_locked = 0;
+    bool akb_is_idle = 0;
+    bool akb_is_shift = 0;
+    char akb_pending[12] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    uint8_t akb_lang = 255;
+    char akb_lang_name[2] = { 'e', 'n' };
 #endif
 
     void updateState(cannedMessageModuleRunState, bool shouldRequestFocus = false);

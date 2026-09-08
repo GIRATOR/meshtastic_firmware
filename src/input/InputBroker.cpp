@@ -16,6 +16,9 @@
 #include "input/RotaryEncoderImpl.h"
 #include "input/RotaryEncoderInterruptImpl1.h"
 #include "input/SerialKeyboardImpl.h"
+#ifdef INPUTBROKER_ANALOG_TYPE
+    #include "AnalogKeyboardImpl.h"
+#endif
 #include "input/UpDownInterruptImpl1.h"
 #include "input/i2cButton.h"
 #if HAS_TRACKBALL
@@ -396,6 +399,10 @@ void InputBroker::Init()
         aSerialKeyboardImpl = new SerialKeyboardImpl();
         aSerialKeyboardImpl->init();
 #endif // INPUTBROKER_MATRIX_TYPE
+#ifdef INPUTBROKER_ANALOG_TYPE
+        aAnalogKeyboardImpl = new AnalogKeyboardImpl();
+        aAnalogKeyboardImpl->init();
+#endif // INPUTBROKER_ANALOG_TYPE
     }
 #endif // HAS_BUTTON
 #if ARCH_PORTDUINO

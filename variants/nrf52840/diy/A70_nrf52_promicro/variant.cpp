@@ -21,9 +21,20 @@ void initVariant()
 
 void variant_shutdown()
 {
-    //TODO: maybe try turn 3V3 off here?
-    //no button pin for now
-    //nrf_gpio_cfg_input(BUTTON_PIN, NRF_GPIO_PIN_PULLUP); // Enable internal pull-up on the button pin
-    //nrf_gpio_pin_sense_t sense = NRF_GPIO_PIN_SENSE_LOW; // Configure SENSE signal on low edge
-    //nrf_gpio_cfg_sense_set(BUTTON_PIN, sense);           // Apply SENSE to wake up the device from the deep sleep
+#ifdef INPUTBROKER_ANALOG_TYPE
+    // Without power analog keyboard will not work, making it imposibble to wakeup device
+    // TODO: update/bodge pcb to feed keyboard divider LDO directly form battery
+    // digitalWrite(PIN_3V3_EN, LOW);
+    
+    // only buttons high on divider will be able to wakeup device
+    // TODO: reroute pcb so "power" button has high enough level
+    nrf_gpio_pin_sense_t sense = NRF_GPIO_PIN_SENSE_HIGH; // trigger on high edge high edge
+    nrf_gpio_cfg_sense_set(KEYBOARD_PIN, sense);          // end sleep interruption
+#else
+    digitalWrite(PIN_3V3_EN, LOW);
+    nrf_gpio_cfg_input(BUTTON_PIN, NRF_GPIO_PIN_PULLUP); // Enable internal pull-up on the button pin
+    nrf_gpio_pin_sense_t sense = NRF_GPIO_PIN_SENSE_LOW; // Configure SENSE signal on low edge
+    nrf_gpio_cfg_sense_set(BUTTON_PIN, sense);           // Apply SENSE to wake up the device from the deep sleep
+#endif    
+
 }
