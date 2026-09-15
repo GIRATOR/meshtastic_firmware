@@ -11,6 +11,7 @@
 #include "graphics/images.h"
 #include "meshUtils.h"
 #include <algorithm>
+#include <languages.h>
 
 // Forward declarations for functions defined in Screen.cpp
 namespace graphics
@@ -116,15 +117,15 @@ namespace graphics
             switch (currentMode_Nodes)
             {
             case MODE_LAST_HEARD:
-                return "Last Heard";
+                return str_getcurmodtit_lastheard;
             case MODE_HOP_SIGNAL:
 #ifdef USE_EINK
-                return "Hops/Sig";
+                return str_getcurmodtit_hopsig;
 #else
-                return (currentResolution == ScreenResolution::High) ? "Hops/Signal" : "Hops/Sig";
+                return (currentResolution == ScreenResolution::High) ? str_getcurmodtit_hopssignal : str_getcurmodtit_hopssig;
 #endif
             default:
-                return "Nodes";
+                return str_getcurmodtit_nodes;
             }
         }
 
@@ -133,11 +134,11 @@ namespace graphics
             switch (currentMode_Location)
             {
             case MODE_DISTANCE:
-                return "Distance";
+                return str_getcurmodtit_distance;
             case MODE_BEARING:
-                return "Bearings";
+                return str_getcurmodtit_bears;
             default:
-                return "Nodes";
+                return str_getcurmodtit_nodes;
             }
         }
 
@@ -213,13 +214,13 @@ namespace graphics
             else
             {
                 uint32_t minutes = seconds / 60, hours = minutes / 60, days = hours / 24;
-                snprintf(timeStr, sizeof(timeStr), (days > 365 ? "?" : "%d%c"),
+                snprintf(timeStr, sizeof(timeStr), (days > 365 ? "?" : "%d%s"),
                          (days    ? days
                           : hours ? hours
                                   : minutes),
-                         (days    ? 'd'
-                          : hours ? 'h'
-                                  : 'm'));
+                         (days    ? str_getcurmodtit_d
+                          : hours ? str_getcurmodtit_h
+                                  : str_getcurmodtit_m));
             }
 
             display->setTextAlignment(TEXT_ALIGN_LEFT);
@@ -367,15 +368,15 @@ namespace graphics
                     {
                         int feet = (int)(miles * 5280);
                         if (feet < 1000)
-                            snprintf(distStr, sizeof(distStr), "%dft", feet);
+                            snprintf(distStr, sizeof(distStr), str_drawnodeinfo_2distft, feet);
                         else
-                            snprintf(distStr, sizeof(distStr), "¼mi"); // 4-char max
+                            snprintf(distStr, sizeof(distStr), str_drawnodeinfo_2distmi); // 4-char max
                     }
                     else
                     {
                         int roundedMiles = (int)(miles + 0.5);
                         if (roundedMiles < 1000)
-                            snprintf(distStr, sizeof(distStr), "%dmi", roundedMiles);
+                            snprintf(distStr, sizeof(distStr), str_drawnodeinfo_2distmi2, roundedMiles);
                         else
                             snprintf(distStr, sizeof(distStr), "999"); // Max display cap
                     }
@@ -386,15 +387,15 @@ namespace graphics
                     {
                         int meters = (int)(distanceKm * 1000);
                         if (meters < 1000)
-                            snprintf(distStr, sizeof(distStr), "%dm", meters);
+                            snprintf(distStr, sizeof(distStr), str_drawnodeinfo_2distm, meters);
                         else
-                            snprintf(distStr, sizeof(distStr), "1k");
+                            snprintf(distStr, sizeof(distStr), str_drawnodeinfo_2distkm);
                     }
                     else
                     {
                         int km = (int)(distanceKm + 0.5);
                         if (km < 1000)
-                            snprintf(distStr, sizeof(distStr), "%dk", km);
+                            snprintf(distStr, sizeof(distStr), str_drawnodeinfo_2distkm2, km);
                         else
                             snprintf(distStr, sizeof(distStr), "999");
                     }
@@ -568,9 +569,9 @@ namespace graphics
             const int rowYOffset = FONT_HEIGHT_SMALL - 3;
             bool locationScreen = false;
 
-            if (strcmp(title, "Bearings") == 0)
+            if (strcmp(title, str_getcurmodtit_bears) == 0)
                 locationScreen = true;
-            else if (strcmp(title, "Distance") == 0)
+            else if (strcmp(title, str_getcurmodtit_distance) == 0)
                 locationScreen = true;
             display->clear();
 
@@ -711,7 +712,7 @@ namespace graphics
                 popupMaxPage = max(1, (totalEntries + perPage - 1) / perPage);
 
                 char buf[32];
-                snprintf(buf, sizeof(buf), "%d-%d/%d  Pg %d/%d", popupStart, popupEnd, popupTotal, popupPage, popupMaxPage);
+                snprintf(buf, sizeof(buf), str_scrollpopupoverlay, popupStart, popupEnd, popupTotal, popupPage, popupMaxPage);
 
                 display->setTextAlignment(TEXT_ALIGN_LEFT);
 
@@ -851,17 +852,17 @@ namespace graphics
 #ifdef USE_EINK
         void drawLastHeardScreen(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y)
         {
-            const char *title = "Last Heard";
+            const char *title = str_getcurmodtit_lastheard;
             drawNodeListScreen(display, state, x, y, title, drawEntryLastHeard);
         }
 
         void drawHopSignalScreen(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y)
         {
 #ifdef USE_EINK
-            const char *title = "Hops/Sig";
+            const char *title = str_getcurmodtit_hopsig;
 #else
 
-            const char *title = "Hops/Signal";
+            const char *title = str_getcurmodtit_hopssignal;
 #endif
             drawNodeListScreen(display, state, x, y, title, drawEntryHopSignal);
         }
@@ -877,7 +878,7 @@ namespace graphics
             auto ourNode = nodeDB->getMeshNode(nodeDB->getNodeNum());
             if (!ourNode || !nodeDB->hasValidPosition(ourNode))
             {
-                drawNodeListScreen(display, state, x, y, "Bearings", drawEntryCompass, drawCompassUnknown, headingRadian, 0.0, 0.0);
+                drawNodeListScreen(display, state, x, y, str_getcurmodtit_bears, drawEntryCompass, drawCompassUnknown, headingRadian, 0.0, 0.0);
                 return;
             }
 
@@ -895,11 +896,11 @@ namespace graphics
 #endif
             if (!CompassRenderer::getHeadingRadians(lat, lon, headingRadian))
             {
-                drawNodeListScreen(display, state, x, y, "Bearings", drawEntryCompass, drawCompassUnknown, headingRadian, lat, lon);
+                drawNodeListScreen(display, state, x, y, str_getcurmodtit_bears, drawEntryCompass, drawCompassUnknown, headingRadian, lat, lon);
                 return;
             }
 
-            drawNodeListScreen(display, state, x, y, "Bearings", drawEntryCompass, drawCompassArrow, headingRadian, lat, lon);
+            drawNodeListScreen(display, state, x, y, str_getcurmodtit_bears, drawEntryCompass, drawCompassArrow, headingRadian, lat, lon);
         }
 
         /// Draw a series of fields in a column, wrapping to multiple columns if needed

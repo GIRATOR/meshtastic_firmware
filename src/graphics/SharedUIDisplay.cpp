@@ -125,12 +125,13 @@ void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const char *ti
                 display->drawLine(0, 14, screenW, 14);
             }
         }
-
+#if (defined(OLED_TINY) || !defined(USE_PCF8812))  //skip title in favour of icons  
         // === Screen Title ===
         const char *headerTitle = titleStr ? titleStr : "";
         const int titleWidth = UIRenderer::measureStringWithEmotes(display, headerTitle);
         const int titleX = (SCREEN_WIDTH - titleWidth) / 2;
         UIRenderer::drawStringWithEmotes(display, titleX, y, headerTitle, FONT_HEIGHT_SMALL, 1, config.display.heading_bold);
+#endif        
     }
     display->setTextAlignment(TEXT_ALIGN_LEFT);
 

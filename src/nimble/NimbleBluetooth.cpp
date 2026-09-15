@@ -609,11 +609,11 @@ class NimbleBluetoothServerCallback : public NimBLEServerCallbacks
                 int y_offset = display->height() <= 80 ? 0 : 12;
                 display->setTextAlignment(TEXT_ALIGN_CENTER);
                 display->setFont(FONT_MEDIUM);
-                display->drawString(x_offset + x, y_offset + y, "Bluetooth");
+                display->drawString(x_offset + x, y_offset + y, str_onpairpass_bluetooth);
 #if !defined(OLED_TINY)
                 display->setFont(FONT_SMALL);
                 y_offset = display->height() == 64 ? y_offset + FONT_HEIGHT_MEDIUM - 4 : y_offset + FONT_HEIGHT_MEDIUM + 5;
-                display->drawString(x_offset + x, y_offset + y, "Enter this code");
+                display->drawString(x_offset + x, y_offset + y, str_onpairpass_entercode);
 #endif
                 display->setFont(FONT_LARGE);
                 char pin[8];

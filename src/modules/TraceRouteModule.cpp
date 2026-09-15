@@ -7,6 +7,7 @@
 #include "mesh/Router.h"
 #include "meshUtils.h"
 #include <vector>
+#include <languages.h>
 
 extern graphics::Screen *screen;
 
@@ -65,7 +66,11 @@ void TraceRouteModule::rebuildResultLines(OLEDDisplay *display)
             continue;
         }
 
+    #if defined(OLED_UA) || defined(OLED_RU)
+        if (display->getStringWidth(segment.c_str(), strlen(segment.c_str()), true) <= maxWidth) {
+    #else
         if (display->getStringWidth(segment) <= maxWidth) {
+    #endif 
             resultLines.push_back(segment);
             continue;
         }
@@ -81,7 +86,11 @@ void TraceRouteModule::rebuildResultLines(OLEDDisplay *display)
                 char ch = remaining.charAt(i);
                 String testLine = tempLine + ch;
 
+    #if defined(OLED_UA) || defined(OLED_RU)
+                if (display->getStringWidth(testLine.c_str(), strlen(testLine.c_str()), true) > maxWidth) {
+    #else
                 if (display->getStringWidth(testLine) > maxWidth) {
+    #endif 
                     if (lastGoodBreak >= 0) {
                         resultLines.push_back(remaining.substring(0, lastGoodBreak + 1));
                         remaining = remaining.substring(lastGoodBreak + 1);
@@ -202,7 +211,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                     if (snr != 0.0f) {
                         result += "(";
                         result += String(snr, 1);
-                        result += "dB)";
+                        result += str_alterRecievedpb_db;
                     }
                 }
                 result += " > ";
@@ -210,7 +219,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                 if (r->snr_towards_count > 0 && r->snr_towards[r->snr_towards_count - 1] != INT8_MIN) {
                     result += "(";
                     result += String((float)r->snr_towards[r->snr_towards_count - 1] / 4.0f, 1);
-                    result += "dB)";
+                    result += str_alterRecievedpb_db;
                 }
                 result += "\n";
             } else {
@@ -221,7 +230,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                 if (r->snr_towards_count > 0 && r->snr_towards[0] != INT8_MIN) {
                     result += "(";
                     result += String((float)r->snr_towards[0] / 4.0f, 1);
-                    result += "dB)";
+                    result += str_alterRecievedpb_db;
                 }
                 result += "\n";
             }
@@ -237,7 +246,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                     if (snr != 0.0f) {
                         result += "(";
                         result += String(snr, 1);
-                        result += "dB)";
+                        result += str_alterRecievedpb_db;
                     }
                 }
                 // add initiator node
@@ -246,7 +255,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                 if (r->snr_back_count > 0 && r->snr_back[r->snr_back_count - 1] != INT8_MIN) {
                     result += "(";
                     result += String((float)r->snr_back[r->snr_back_count - 1] / 4.0f, 1);
-                    result += "dB)";
+                    result += str_alterRecievedpb_db;
                 }
             } else {
                 // Direct return path (no intermediate hops)
@@ -256,7 +265,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                 if (r->snr_back_count > 0 && r->snr_back[0] != INT8_MIN) {
                     result += "(";
                     result += String((float)r->snr_back[0] / 4.0f, 1);
-                    result += "dB)";
+                    result += str_alterRecievedpb_db;
                 }
             }
 
@@ -423,17 +432,17 @@ void TraceRouteModule::printRoute(meshtastic_RouteDiscovery *r, uint32_t origin,
     route += vformat("0x%x --> ", origin);
     for (uint8_t i = 0; i < r->route_count; i++) {
         if (i < r->snr_towards_count && r->snr_towards[i] != INT8_MIN)
-            route += vformat("0x%x (%.2fdB) --> ", r->route[i], (float)r->snr_towards[i] / 4);
+            route += vformat(str_printroute_db1, r->route[i], (float)r->snr_towards[i] / 4);
         else
-            route += vformat("0x%x (?dB) --> ", r->route[i]);
+            route += vformat(str_printroute_db2, r->route[i]);
     }
     // If we are the destination, or it has already reached the destination, print it
     if (dest == nodeDB->getNodeNum() || !isTowardsDestination) {
         if (r->snr_towards_count > 0 && r->snr_towards[r->snr_towards_count - 1] != INT8_MIN)
-            route += vformat("0x%x (%.2fdB)", dest, (float)r->snr_towards[r->snr_towards_count - 1] / 4);
+            route += vformat(str_printroute_db3, dest, (float)r->snr_towards[r->snr_towards_count - 1] / 4);
 
         else
-            route += vformat("0x%x (?dB)", dest);
+            route += vformat(str_printroute_db4, dest);
     } else
         route += "...";
 
@@ -441,15 +450,15 @@ void TraceRouteModule::printRoute(meshtastic_RouteDiscovery *r, uint32_t origin,
     if (r->route_back_count > 0 || origin == nodeDB->getNodeNum()) {
         route += "\n";
         if (r->snr_towards_count > 0 && origin == nodeDB->getNodeNum())
-            route += vformat("(%.2fdB) 0x%x <-- ", (float)r->snr_back[r->snr_back_count - 1] / 4, origin);
+            route += vformat(str_printroute_db5, (float)r->snr_back[r->snr_back_count - 1] / 4, origin);
         else
             route += "...";
 
         for (int8_t i = r->route_back_count - 1; i >= 0; i--) {
             if (i < r->snr_back_count && r->snr_back[i] != INT8_MIN)
-                route += vformat("(%.2fdB) 0x%x <-- ", (float)r->snr_back[i] / 4, r->route_back[i]);
+                route += vformat(str_printroute_db5, (float)r->snr_back[i] / 4, r->route_back[i]);
             else
-                route += vformat("(?dB) 0x%x <-- ", r->route_back[i]);
+                route += vformat(str_printroute_db6, r->route_back[i]);
         }
         route += vformat("0x%x", dest);
     }
@@ -514,7 +523,7 @@ bool TraceRouteModule::startTraceRoute(NodeNum node)
     if (node == 0 || node == NODENUM_BROADCAST) {
         LOG_ERROR("Invalid node number for trace route: 0x%08x", node);
         runState = TRACEROUTE_STATE_RESULT;
-        setResultText("Invalid node");
+        setResultText(str_starttrace_invalid);
         resultShowTime = millis();
         tracingNode = 0;
 
@@ -528,7 +537,7 @@ bool TraceRouteModule::startTraceRoute(NodeNum node)
     if (node == nodeDB->getNodeNum()) {
         LOG_ERROR("Cannot trace route to self: 0x%08x", node);
         runState = TRACEROUTE_STATE_RESULT;
-        setResultText("Cannot trace self");
+        setResultText(str_starttrace_cantself);
         resultShowTime = millis();
         tracingNode = 0;
 
@@ -553,7 +562,7 @@ bool TraceRouteModule::startTraceRoute(NodeNum node)
     if (initialized && lastTraceRouteTime > 0 && now - lastTraceRouteTime < cooldownMs) {
         // Cooldown
         unsigned long wait = (cooldownMs - (now - lastTraceRouteTime)) / 1000;
-        bannerText = String("Wait for ") + String(wait) + String("s");
+        bannerText = String(str_tracecolldwn_wait) + String(wait) + String(str_tracecolldwn_s);
         runState = TRACEROUTE_STATE_COOLDOWN;
         resultText = "";
         clearResultLines();
@@ -571,7 +580,7 @@ bool TraceRouteModule::startTraceRoute(NodeNum node)
     runState = TRACEROUTE_STATE_TRACKING;
     resultText = "";
     clearResultLines();
-    bannerText = String("Tracing ") + getNodeName(node);
+    bannerText = String(str_tracecolldwn_tracing) + getNodeName(node);
 
     LOG_INFO("TraceRoute UI: Starting trace route to node 0x%08x, requesting focus", node);
 
@@ -626,7 +635,7 @@ bool TraceRouteModule::startTraceRoute(NodeNum node)
     } else {
         LOG_ERROR("Failed to allocate TraceRoute packet from router");
         runState = TRACEROUTE_STATE_RESULT;
-        setResultText("Failed to send");
+        setResultText(str_tracecolldwn_failed);
         resultShowTime = millis();
         tracingNode = 0;
 
@@ -644,7 +653,7 @@ void TraceRouteModule::launch(NodeNum node)
     if (node == 0 || node == NODENUM_BROADCAST) {
         LOG_ERROR("Invalid node number for trace route: 0x%08x", node);
         runState = TRACEROUTE_STATE_RESULT;
-        setResultText("Invalid node");
+        setResultText(str_starttrace_invalid);
         resultShowTime = millis();
         tracingNode = 0;
 
@@ -658,7 +667,7 @@ void TraceRouteModule::launch(NodeNum node)
     if (node == nodeDB->getNodeNum()) {
         LOG_ERROR("Cannot trace route to self: 0x%08x", node);
         runState = TRACEROUTE_STATE_RESULT;
-        setResultText("Cannot trace self");
+        setResultText(str_starttrace_cantself);
         resultShowTime = millis();
         tracingNode = 0;
 
@@ -678,7 +687,7 @@ void TraceRouteModule::launch(NodeNum node)
     unsigned long now = millis();
     if (initialized && lastTraceRouteTime > 0 && now - lastTraceRouteTime < cooldownMs) {
         unsigned long wait = (cooldownMs - (now - lastTraceRouteTime)) / 1000;
-        bannerText = String("Wait for ") + String(wait) + String("s");
+        bannerText = String(str_tracecolldwn_wait) + String(wait) + String(str_tracecolldwn_s);
         runState = TRACEROUTE_STATE_COOLDOWN;
         resultText = "";
         clearResultLines();
@@ -696,7 +705,7 @@ void TraceRouteModule::launch(NodeNum node)
     lastTraceRouteTime = now;
     resultText = "";
     clearResultLines();
-    bannerText = String("Tracing ") + getNodeName(node);
+    bannerText = String(str_tracecolldwn_tracing) + getNodeName(node);
 
     requestFocus();
 
@@ -730,14 +739,14 @@ void TraceRouteModule::launch(NodeNum node)
         } else {
             LOG_ERROR("MeshService is NULL!");
             runState = TRACEROUTE_STATE_RESULT;
-            setResultText("Service unavailable");
+            setResultText(str_tracecolldwn_unavailable);
             resultShowTime = millis();
             tracingNode = 0;
         }
     } else {
         LOG_ERROR("Failed to allocate TraceRoute packet from router");
         runState = TRACEROUTE_STATE_RESULT;
-        setResultText("Failed to send");
+        setResultText(str_tracecolldwn_failed);
         resultShowTime = millis();
         tracingNode = 0;
     }
@@ -788,7 +797,7 @@ void TraceRouteModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *state
         display->setFont(FONT_MEDIUM);
         display->setTextAlignment(TEXT_ALIGN_LEFT);
 
-        display->drawString(x, y, "Route Result");
+        display->drawString(x, y, str_tracecolldwn_result);
 
         int contentStartY = y + FONT_HEIGHT_MEDIUM + 2; // Add more spacing after title
         display->setTextAlignment(TEXT_ALIGN_LEFT);
@@ -827,7 +836,7 @@ int32_t TraceRouteModule::runOnce()
     if (runState == TRACEROUTE_STATE_TRACKING && now - lastTraceRouteTime > trackingTimeoutMs) {
         LOG_INFO("TraceRoute timeout, no response received");
         runState = TRACEROUTE_STATE_RESULT;
-        setResultText("No response received");
+        setResultText(str_tracecolldwn_noresponse);
         resultShowTime = now;
         tracingNode = 0;
 
@@ -844,7 +853,7 @@ int32_t TraceRouteModule::runOnce()
     if (runState == TRACEROUTE_STATE_COOLDOWN) {
         unsigned long wait = (cooldownMs - (now - lastTraceRouteTime)) / 1000;
         if (wait > 0) {
-            String newBannerText = String("Wait for ") + String(wait) + String("s");
+            String newBannerText = String(str_tracecolldwn_wait) + String(wait) + String(str_tracecolldwn_s);
             bannerText = newBannerText;
             LOG_INFO("TraceRoute cooldown: updating banner to %s", bannerText.c_str());
 

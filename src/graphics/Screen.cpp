@@ -131,6 +131,7 @@ namespace graphics
 
 #include "graphics/ScreenFonts.h"
 #include <Throttle.h>
+#include <languages.h>
 
     // Usage: int stringWidth = formatDateTime(datetimeStr, sizeof(datetimeStr), rtc_sec, display);
     // End Functions to write date/time to the screen
@@ -300,7 +301,7 @@ namespace graphics
         NotificationRenderer::textInputCallback = textCallback;
 
         // Store the message and set the expiration timestamp (use same pattern as other notifications)
-        strncpy(NotificationRenderer::alertBannerMessage, header ? header : "Text Input", 255);
+        strncpy(NotificationRenderer::alertBannerMessage, header ? header : str_showtxtinput_txinput, 255);
         NotificationRenderer::alertBannerMessage[255] = '\0';
         NotificationRenderer::alertBannerUntil = (durationMs == 0) ? 0 : millis() + durationMs;
         NotificationRenderer::pauseBanner = false;
@@ -1000,7 +1001,7 @@ namespace graphics
 #endif
         if (!NotificationRenderer::isOverlayBannerShowing() && rebootAtMsec != 0 && !suppressRebootBanner)
         {
-            showSimpleBanner("Rebooting...", 0);
+            showSimpleBanner(str_runonce_rebooting, 0);
         }
 
         // Process incoming commands.
@@ -1863,7 +1864,7 @@ namespace graphics
                     }
                     else
                     {
-                        strncpy(titleBuf, "Message", sizeof(titleBuf) - 1);
+                        strncpy(titleBuf, str_hndltxtmsg_msg , sizeof(titleBuf) - 1);
                     }
 
                     // Content: payload bytes may not be null-terminated, remove ASCII_BELL and sanitize
@@ -1901,11 +1902,11 @@ namespace graphics
                     {
                         if (longName && longName[0])
                         {
-                            snprintf(banner, sizeof(banner), "Alert Received from\n%s", longName);
+                            snprintf(banner, sizeof(banner), str_hndltxtmsg_alertfrom, longName);
                         }
                         else
                         {
-                            strcpy(banner, "Alert Received");
+                            strcpy(banner, str_hndltxtmsg_alert);
                         }
                         screen->showSimpleBanner(banner, 3000);
                     }
@@ -1915,16 +1916,16 @@ namespace graphics
                         {
                             if (currentResolution == ScreenResolution::UltraLow)
                             {
-                                strcpy(banner, "New Message");
+                                strcpy(banner, str_hndltxtmsg_newmsg);
                             }
                             else
                             {
-                                snprintf(banner, sizeof(banner), "New Message from\n%s", longName);
+                                snprintf(banner, sizeof(banner), str_hndltxtmsg_msgfrom, longName);
                             }
                         }
                         else
                         {
-                            strcpy(banner, "New Message");
+                            strcpy(banner, str_hndltxtmsg_newmsg);
                         }
 #if defined(M5STACK_UNITC6L)
                         screen->setOn(true);

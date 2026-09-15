@@ -16,6 +16,8 @@
 #include "modules/AdminModule.h"
 #include "modules/ExternalNotificationModule.h"
 
+#include <languages.h>
+
 SystemCommandsModule *systemCommandsModule;
 
 SystemCommandsModule::SystemCommandsModule()
@@ -47,7 +49,7 @@ int SystemCommandsModule::handleInputEvent(const InputEvent *event)
         if (moduleConfig.external_notification.enabled && externalNotificationModule) {
             externalNotificationModule->setMute(!externalNotificationModule->getMute());
             IF_SCREEN(if (!externalNotificationModule->getMute()) externalNotificationModule->stopNow(); screen->showSimpleBanner(
-                externalNotificationModule->getMute() ? "Notifications\nDisabled" : "Notifications\nEnabled", 3000);)
+                externalNotificationModule->getMute() ? str_syscommodule_notifydisabled : str_syscommodule_notifyenabled, 3000);)
         }
         return 0;
     // Bluetooth
@@ -58,24 +60,24 @@ int SystemCommandsModule::handleInputEvent(const InputEvent *event)
 #if defined(ARDUINO_ARCH_NRF52)
         if (!config.bluetooth.enabled) {
             disableBluetooth();
-            IF_SCREEN(screen->showSimpleBanner("Bluetooth OFF\nRebooting", 3000));
+            IF_SCREEN(screen->showSimpleBanner(str_syscommodule_btoffreboot, 3000));
             rebootAtMsec = millis() + DEFAULT_REBOOT_SECONDS * 2000;
         } else {
-            IF_SCREEN(screen->showSimpleBanner("Bluetooth ON\nRebooting", 3000));
+            IF_SCREEN(screen->showSimpleBanner(str_syscommodule_btonrebbot, 3000));
             rebootAtMsec = millis() + DEFAULT_REBOOT_SECONDS * 1000;
         }
 #else
         if (!config.bluetooth.enabled) {
             disableBluetooth();
-            IF_SCREEN(screen->showSimpleBanner("Bluetooth OFF", 3000));
+            IF_SCREEN(screen->showSimpleBanner(str_syscommodule_btoff, 3000));
         } else {
-            IF_SCREEN(screen->showSimpleBanner("Bluetooth ON\nRebooting", 3000));
+            IF_SCREEN(screen->showSimpleBanner(str_syscommodule_btonrebbot, 3000));
             rebootAtMsec = millis() + DEFAULT_REBOOT_SECONDS * 1000;
         }
 #endif
         return 0;
     case INPUT_BROKER_MSG_REBOOT:
-        IF_SCREEN(screen->showSimpleBanner("Rebooting...", 0));
+        IF_SCREEN(screen->showSimpleBanner(str_syscommodule_rebbot, 0));
         nodeDB->saveToDisk();
 #if HAS_SCREEN
         messageStore.saveToFlash();
@@ -97,7 +99,7 @@ int SystemCommandsModule::handleInputEvent(const InputEvent *event)
             }
             gps->toggleGpsMode();
             const char *msg =
-                (config.position.gps_mode == meshtastic_Config_PositionConfig_GpsMode_ENABLED) ? "GPS Enabled" : "GPS Disabled";
+                (config.position.gps_mode == meshtastic_Config_PositionConfig_GpsMode_ENABLED) ? str_syscommodule_gpson : str_syscommodule_gpsoff;
             IF_SCREEN(screen->forceDisplay(); screen->showSimpleBanner(msg, 3000);)
         }
 #endif
@@ -106,9 +108,9 @@ int SystemCommandsModule::handleInputEvent(const InputEvent *event)
     case INPUT_BROKER_SEND_PING:
         service->refreshLocalMeshNode();
         if (service->trySendPosition(NODENUM_BROADCAST, true)) {
-            IF_SCREEN(screen->showSimpleBanner("Position\nSent", 3000));
+            IF_SCREEN(screen->showSimpleBanner(str_syscommodule_possent, 3000));
         } else {
-            IF_SCREEN(screen->showSimpleBanner("Node Info\nSent", 3000));
+            IF_SCREEN(screen->showSimpleBanner(str_syscommodule_infosent, 3000));
         }
         return true;
     // Power control
@@ -123,7 +125,7 @@ int SystemCommandsModule::handleInputEvent(const InputEvent *event)
         // reboot(DEFAULT_REBOOT_SECONDS);
         LOG_INFO("Reboot in %d seconds", DEFAULT_REBOOT_SECONDS);
         if (screen)
-            screen->showSimpleBanner("Rebooting...", 0); // stays on screen
+            screen->showSimpleBanner(str_syscommodule_rebbot, 0); // stays on screen
         rebootAtMsec = (DEFAULT_REBOOT_SECONDS < 0) ? 0 : (millis() + DEFAULT_REBOOT_SECONDS * 1000);
         return true;
 

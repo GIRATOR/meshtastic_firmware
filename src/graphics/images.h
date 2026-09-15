@@ -318,7 +318,7 @@ const uint8_t chirpy_small[] = {0x7f, 0x41, 0x55, 0x55, 0x55, 0x55, 0x41, 0x7f};
 #define connection_icon_height 5
 const uint8_t connection_icon[] = {0x36, 0x41, 0x5D, 0x41, 0x36};
 
-#ifdef OLED_TINY
+#if (defined(OLED_TINY) || defined(USE_PCF8812))
 #include "img/icon_small.xbm"
 #else
 #include "img/icon.xbm"

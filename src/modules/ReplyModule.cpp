@@ -4,6 +4,7 @@
 #include "main.h"
 
 #include <assert.h>
+#include <languages.h>
 
 meshtastic_MeshPacket *ReplyModule::allocReply()
 {
@@ -15,7 +16,7 @@ meshtastic_MeshPacket *ReplyModule::allocReply()
     LOG_INFO("Received message from=0x%0x, id=%d, msg=%.*s", req.from, req.id, p.payload.size, p.payload.bytes);
 #endif
 
-    const char *replyStr = "Message Received";
+    const char *replyStr = str_replymodule_recv;
     auto reply = allocDataPacket();                 // Allocate a packet for sending
     reply->decoded.payload.size = strlen(replyStr); // You must specify how many bytes are in the reply
     memcpy(reply->decoded.payload.bytes, replyStr, reply->decoded.payload.size);

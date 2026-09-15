@@ -12,6 +12,7 @@
 #include "graphics/draw/NodeListRenderer.h"
 #include "main.h"
 #endif
+#include <languages.h>
 
 WaypointModule *waypointModule;
 
@@ -78,7 +79,7 @@ void WaypointModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *state, 
     int line = 1;
 
     // === Set Title
-    const char *titleStr = "Waypoint";
+    const char *titleStr = str_waypointdrawframe_wp;
 
     // === Header ===
     graphics::drawCommonHeader(display, x, y, titleStr);
@@ -197,12 +198,14 @@ void WaypointModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *state, 
         statusLine2 = "Fix";
     }
 
+    #ifndef USE_PCF8812 // to narrow
     if (statusLine1) {
         display->drawCircle(compassX, compassY, compassRadius);
         display->setTextAlignment(TEXT_ALIGN_CENTER);
         display->drawString(compassX, compassY - FONT_HEIGHT_SMALL, statusLine1);
         display->drawString(compassX, compassY, statusLine2);
     }
+    #endif
 
     display->setTextAlignment(TEXT_ALIGN_LEFT); // Something above me changes to a different alignment, forcing a fix here!
     display->drawString(0, textPos[line++], lastStr);

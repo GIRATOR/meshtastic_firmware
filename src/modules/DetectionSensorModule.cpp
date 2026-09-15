@@ -6,6 +6,7 @@
 #include "configuration.h"
 #include "main.h"
 #include <Throttle.h>
+#include <languages.h>
 DetectionSensorModule *detectionSensorModule;
 
 #define GPIO_POLLING_INTERVAL 100
@@ -120,7 +121,7 @@ void DetectionSensorModule::sendDetectionMessage()
 {
     LOG_DEBUG("Detected event observed. Send message");
     char *message = new char[40];
-    sprintf(message, "%s detected", moduleConfig.detection_sensor.name);
+    sprintf(message, str_senddetectmsg_detected, moduleConfig.detection_sensor.name);
     meshtastic_MeshPacket *p = allocDataPacket();
     p->want_ack = false;
     p->decoded.payload.size = strlen(message);
@@ -142,7 +143,7 @@ void DetectionSensorModule::sendDetectionMessage()
 void DetectionSensorModule::sendCurrentStateMessage(bool state)
 {
     char *message = new char[40];
-    sprintf(message, "%s state: %i", moduleConfig.detection_sensor.name, state);
+    sprintf(message, str_senddetectmsg_state, moduleConfig.detection_sensor.name, state);
     meshtastic_MeshPacket *p = allocDataPacket();
     p->want_ack = false;
     p->decoded.payload.size = strlen(message);

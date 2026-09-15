@@ -145,6 +145,7 @@ extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const c
 #include "Sensor/AddI2CSensorTemplate.h"
 #include "graphics/ScreenFonts.h"
 #include <Throttle.h>
+#include <languages.h>
 
 static constexpr uint16_t TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY = 0x8002;
 
@@ -358,7 +359,7 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     int line = 1;
 
     // === Set Title
-    const char *titleStr = (graphics::currentResolution == graphics::ScreenResolution::High) ? "Environment" : "Env.";
+    const char *titleStr = (graphics::currentResolution == graphics::ScreenResolution::High) ? str_envdrawframe_environment : str_envdrawframe_env;
 
     // === Header ===
     graphics::drawCommonHeader(display, x, y, titleStr);
@@ -369,7 +370,7 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
 
     // === Show "No Telemetry" if no data available ===
     if (!lastMeasurementPacket) {
-        display->drawString(x, currentY, "No Telemetry");
+        display->drawString(x, currentY, str_envdrawframe_notele);
         return;
     }
 
@@ -377,7 +378,7 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     const meshtastic_Data &p = lastMeasurementPacket->decoded;
     meshtastic_Telemetry telemetry;
     if (!pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &telemetry)) {
-        display->drawString(x, currentY, "No Telemetry");
+        display->drawString(x, currentY, str_envdrawframe_notele);
         return;
     }
 
@@ -388,7 +389,7 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
                   m.current != 0 || m.lux != 0 || m.white_lux != 0 || m.weight != 0 || m.distance != 0 || m.radiation != 0;
 
     if (!hasAny) {
-        display->drawString(x, currentY, "No Telemetry");
+        display->drawString(x, currentY, str_envdrawframe_notele);
         return;
     }
 
@@ -396,9 +397,9 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     const char *sender = getSenderShortName(*lastMeasurementPacket);
     uint32_t agoSecs = service->GetTimeSinceMeshPacket(lastMeasurementPacket);
     String agoStr = (agoSecs > 864000) ? "?"
-                    : (agoSecs > 3600) ? String(agoSecs / 3600) + "h"
-                    : (agoSecs > 60)   ? String(agoSecs / 60) + "m"
-                                       : String(agoSecs) + "s";
+                    : (agoSecs > 3600) ? String(agoSecs / 3600) + str_envdrawframe_h
+                    : (agoSecs > 60)   ? String(agoSecs / 60) + str_envdrawframe_m
+                                       : String(agoSecs) + str_envdrawframe_s;
 
     String leftStr = String(sender) + " (" + agoStr + ")";
     display->drawString(x, currentY, leftStr); // Left side: who and when
@@ -408,35 +409,35 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
 
     if (m.has_temperature) {
         String tempStr = moduleConfig.telemetry.environment_display_fahrenheit
-                             ? "Tmp: " + String(UnitConversions::CelsiusToFahrenheit(m.temperature), 1) + "°F"
-                             : "Tmp: " + String(m.temperature, 1) + "°C";
+                             ? str_envdrawframe_temp + String(UnitConversions::CelsiusToFahrenheit(m.temperature), 1) + "°F"
+                             : str_envdrawframe_temp + String(m.temperature, 1) + "°C";
         entries.push_back(tempStr);
     }
     if (m.has_relative_humidity)
-        entries.push_back("Hum: " + String(m.relative_humidity, 0) + "%");
+        entries.push_back(str_envdrawframe_hum + String(m.relative_humidity, 0) + "%");
     if (m.barometric_pressure != 0)
-        entries.push_back("Prss: " + String(m.barometric_pressure, 0) + " hPa");
+        entries.push_back(str_envdrawframe_prss + String(m.barometric_pressure, 0) + str_envdrawframe_hpa);
     if (m.iaq != 0) {
-        String aqi = "IAQ: " + String(m.iaq);
+        String aqi = str_envdrawframe_iaq + String(m.iaq);
         const char *bannerMsg = nullptr; // Default: no banner
 
         if (m.iaq <= 25)
-            aqi += " (Excellent)";
+            aqi += str_envdrawframe_excellenet;
         else if (m.iaq <= 50)
-            aqi += " (Good)";
+            aqi += str_envdrawframe_good;
         else if (m.iaq <= 100)
-            aqi += " (Moderate)";
+            aqi += str_envdrawframe_moderate;
         else if (m.iaq <= 150)
-            aqi += " (Poor)";
+            aqi += str_envdrawframe_poor;
         else if (m.iaq <= 200) {
-            aqi += " (Unhealthy)";
-            bannerMsg = "Unhealthy IAQ";
+            aqi += str_envdrawframe_unhealthy;
+            bannerMsg = str_envdrawframe_unhiaq;
         } else if (m.iaq <= 300) {
-            aqi += " (Very Unhealthy)";
-            bannerMsg = "Very Unhealthy IAQ";
+            aqi += str_envdrawframe_veryunhealthy;
+            bannerMsg = str_envdrawframe_veryunhiaq;
         } else {
-            aqi += " (Hazardous)";
-            bannerMsg = "Hazardous IAQ";
+            aqi += str_envdrawframe_hazard;
+            bannerMsg = str_envdrawframe_hazardiaq;
         }
 
         entries.push_back(aqi);
@@ -461,17 +462,17 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
         }
     }
     if (m.voltage != 0 || m.current != 0)
-        entries.push_back(String(m.voltage, 1) + "V / " + String(m.current, 0) + "mA");
+        entries.push_back(String(m.voltage, 1) + str_envdrawframe_v + String(m.current, 0) + str_envdrawframe_ma);
     if (m.lux != 0)
-        entries.push_back("Light: " + String(m.lux, 0) + "lx");
+        entries.push_back(str_envdrawframe_light + String(m.lux, 0) + str_envdrawframe_lx);
     if (m.white_lux != 0)
-        entries.push_back("White: " + String(m.white_lux, 0) + "lx");
+        entries.push_back(str_envdrawframe_white + String(m.white_lux, 0) + str_envdrawframe_lx);
     if (m.weight != 0)
-        entries.push_back("Weight: " + String(m.weight, 0) + "kg");
+        entries.push_back(str_envdrawframe_weight + String(m.weight, 0) + str_envdrawframe_kg);
     if (m.distance != 0)
-        entries.push_back("Level: " + String(m.distance, 0) + "mm");
+        entries.push_back(str_envdrawframe_level + String(m.distance, 0) + str_envdrawframe_mm);
     if (m.radiation != 0)
-        entries.push_back("Rad: " + String(m.radiation, 2) + " µR/h");
+        entries.push_back(str_envdrawframe_rad + String(m.radiation, 2) + str_envdrawframe_urh);
 
     // === Show first available metric on top-right of first line ===
     if (!entries.empty()) {

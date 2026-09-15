@@ -3,6 +3,7 @@
 #include "SPILock.h"
 #include "SafeFile.h"
 #include "graphics/draw/CompassRenderer.h"
+#include <languages.h>
 
 #if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C
 
@@ -242,27 +243,27 @@ void MotionSensor::drawFrameCalibration(OLEDDisplay *display, OLEDDisplayUiState
 
     display->setTextAlignment(TEXT_ALIGN_LEFT);
     if (textWidth > 12) {
-        const char *title = "Cal";
-        const char *line1 = "Figure-8";
-        const char *line2 = "Rotate axes";
-        const char *line3 = "Away from metal";
+        const char *title = str_framecalibration_cal;
+        const char *line1 = str_framecalibration_8;
+        const char *line2 = str_framecalibration_rotateax;
+        const char *line3 = str_framecalibration_awayfrom;
 
         display->setFont(FONT_SMALL);
         if (!compactLayout && display->getStringWidth("Compass Calibration") <= textWidth) {
             display->setFont(FONT_MEDIUM);
-            title = "Compass Calibration";
-            line1 = "Move in figure-8";
-            line2 = "Rotate all axes";
-            line3 = "Keep from metal";
+            title = str_framecalibration_compcalib;
+            line1 = str_framecalibration_movein8;
+            line2 = str_framecalibration_rotateall;
+            line3 = str_framecalibration_keetfrom;
             display->drawString(textLeft, lineY, title);
             lineY += FONT_HEIGHT_MEDIUM;
             display->setFont(FONT_SMALL);
-        } else if (display->getStringWidth("Compass Cal") <= textWidth) {
-            title = "Compass Cal";
-            if (textWidth >= display->getStringWidth("Move in figure-8")) {
-                line1 = "Move in figure-8";
-                line2 = "Rotate all axes";
-                line3 = "Keep from metal";
+        } else if (display->getStringWidth(str_framecalibration_compascal) <= textWidth) {
+            title = str_framecalibration_compascal;
+            if (textWidth >= display->getStringWidth(str_framecalibration_moveinfig)) {
+                line1 = str_framecalibration_moveinfig;
+                line2 =  str_framecalibration_rotatealax;
+                line3 = str_framecalibration_frommetal;
             }
             display->drawString(textLeft, lineY, title);
             lineY += FONT_HEIGHT_SMALL;
@@ -280,10 +281,10 @@ void MotionSensor::drawFrameCalibration(OLEDDisplay *display, OLEDDisplayUiState
         }
     }
 
-    if (textWidth >= display->getStringWidth("000s left")) {
-        snprintf(timeRemainingBuffer, sizeof(timeRemainingBuffer), "%lus left", (unsigned long)timeRemaining);
+    if (textWidth >= display->getStringWidth(str_framecalibration_000leftft)) {
+        snprintf(timeRemainingBuffer, sizeof(timeRemainingBuffer), str_framecalibration_usleft, (unsigned long)timeRemaining);
     } else {
-        snprintf(timeRemainingBuffer, sizeof(timeRemainingBuffer), "%lus", (unsigned long)timeRemaining);
+        snprintf(timeRemainingBuffer, sizeof(timeRemainingBuffer), str_framecalibration_us, (unsigned long)timeRemaining);
     }
     display->setFont(FONT_SMALL);
     if (textWidth > 12) {

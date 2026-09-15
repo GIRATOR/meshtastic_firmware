@@ -8,7 +8,6 @@
 #ifndef PCF8812_h
 
 #define PCF8812_h
-#define OLED_TINY
 #define OLEDDISPLAY_REDUCE_MEMORY
 
 // defaults for siemens A70 LCD, redefine in your variant.h when needed

@@ -43,6 +43,7 @@ extern MessageStore messageStore;
 
 #include "graphics/ScreenFonts.h"
 #include <Throttle.h>
+#include <languages.h>
 
 // Remove Canned message screen if no action is taken for some milliseconds
 #define INACTIVATE_AFTER_MS 20000
@@ -97,7 +98,7 @@ void CannedMessageModule::LaunchWithDestination(NodeNum newDest, uint8_t newChan
     // Upon activation, highlight "[Select Destination]"
     int selectDestination = 0;
     for (int i = 0; i < messagesCount; ++i) {
-        if (strcmp(messages[i], "[Select Destination]") == 0) {
+        if (strcmp(messages[i], str_launchwithdest_selectdest) == 0) {
             selectDestination = i;
             break;
         }
@@ -171,13 +172,13 @@ int CannedMessageModule::splitConfiguredMessages()
     const char *tempMessages[CANNED_MESSAGE_MODULE_MESSAGE_MAX_COUNT + 3] = {0};
     int tempCount = 0;
     // Insert at position 0 (top)
-    tempMessages[tempCount++] = "[Select Destination]";
+    tempMessages[tempCount++] = str_launchwithdest_selectdest;
 #if (defined(USE_VIRTUAL_KEYBOARD) || defined(INPUTBROKER_ANALOG_TYPE))
     // Add a "Free Text" entry at the top if using a touch screen virtual keyboard
-    tempMessages[tempCount++] = "[-- Free Text --]";
+    tempMessages[tempCount++] = str_launchwithdest_freetext;
 #else
     if (osk_found && screen) {
-        tempMessages[tempCount++] = "[-- Free Text --]";
+        tempMessages[tempCount++] = str_launchwithdest_freetext;
     }
 #endif
 
@@ -197,7 +198,7 @@ int CannedMessageModule::splitConfiguredMessages()
     }
 
     // Add [Exit] as the last entry
-    tempMessages[tempCount++] = "[Exit]";
+    tempMessages[tempCount++] = str_handlmsgselectinput_exit;
 
     // Copy to the member array
     for (int k = 0; k < tempCount; ++k) {
@@ -214,9 +215,9 @@ void CannedMessageModule::drawHeader(OLEDDisplay *display, int16_t x, int16_t y,
     char header[96];
     if (this->dest == NODENUM_BROADCAST) {
         const char *channelName = channels.getName(this->channel);
-        snprintf(header, sizeof(header), "To: #%s", channelName ? channelName : "?");
+        snprintf(header, sizeof(header), str_drawheader_to1, channelName ? channelName : "?");
     } else {
-        snprintf(header, sizeof(header), "To: @%s", getNodeName(this->dest));
+        snprintf(header, sizeof(header), str_drawheader_to2, getNodeName(this->dest));
     }
 
     const int maxWidth = std::max(0, display->getWidth() - x);
@@ -717,7 +718,7 @@ bool CannedMessageModule::handleMessageSelectorInput(const InputEvent *event, bo
         const char *current = messages[currentMessageIndex];
 
         // [Select Destination] triggers destination selection UI
-        if (strcmp(current, "[Select Destination]") == 0) {
+        if (strcmp(current, str_launchwithdest_selectdest) == 0) {
             returnToCannedList = true;
             updateState(CANNED_MESSAGE_RUN_STATE_DESTINATION_SELECTION, true);
             destIndex = 0;
@@ -728,7 +729,7 @@ bool CannedMessageModule::handleMessageSelectorInput(const InputEvent *event, bo
         }
 
         // [Exit] returns to the main/inactive screen
-        if (strcmp(current, "[Exit]") == 0) {
+        if (strcmp(current, str_handlmsgselectinput_exit) == 0) {
             // Set runState to inactive so we return to main UI
             updateState(CANNED_MESSAGE_RUN_STATE_INACTIVE);
             currentMessageIndex = -1;
@@ -743,7 +744,7 @@ bool CannedMessageModule::handleMessageSelectorInput(const InputEvent *event, bo
 
         // [Free Text] triggers the free text input (virtual keyboard)
 #if (defined(USE_VIRTUAL_KEYBOARD) || defined(INPUTBROKER_ANALOG_TYPE))
-        if (strcmp(current, "[-- Free Text --]") == 0) {
+        if (strcmp(current, str_launchwithdest_freetext) == 0) {
             updateState(CANNED_MESSAGE_RUN_STATE_FREETEXT, true);
             UIFrameEvent e;
             e.action = UIFrameEvent::Action::REGENERATE_FRAMESET;
@@ -807,7 +808,7 @@ bool CannedMessageModule::handleMessageSelectorInput(const InputEvent *event, bo
         } else {
 #if CANNED_MESSAGE_ADD_CONFIRMATION
             const int savedIndex = currentMessageIndex;
-            graphics::menuHandler::showConfirmationBanner("Send message?", [this, savedIndex]() {
+            graphics::menuHandler::showConfirmationBanner(str_handlmsgselectinput_sendmsg, [this, savedIndex]() {
                 this->currentMessageIndex = savedIndex;
                 this->payload = this->runState;
                 this->updateState(CANNED_MESSAGE_RUN_STATE_ACTION_SELECT);
@@ -1142,7 +1143,7 @@ void CannedMessageModule::sendText(NodeNum dest, ChannelIndex channel, const cha
     // Show banner immediately
     if (screen) {
         graphics::BannerOverlayOptions opts;
-        opts.message = "Sending...";
+        opts.message = str_sendtext_sending;
         opts.durationMs = 2000;
         screen->showOverlayBanner(opts);
     }
@@ -1895,7 +1896,7 @@ void CannedMessageModule::drawDestinationSelectionScreen(OLEDDisplay *display, O
 
     // Header
     int titleY = 2;
-    String titleText = "Select Destination";
+    String titleText = str_drawdestselscr_selectdest;
     titleText += searchQuery.length() > 0 ? " [" + searchQuery + "]" : " [ ]";
     display->setTextAlignment(TEXT_ALIGN_CENTER);
     display->drawString(display->getWidth() / 2, titleY, titleText);
@@ -2149,7 +2150,7 @@ void CannedMessageModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *st
         if (runState != CANNED_MESSAGE_RUN_STATE_DESTINATION_SELECTION) {
             uint16_t charsLeft =
                 meshtastic_Constants_DATA_PAYLOAD_LEN - this->freetext.length() - (moduleConfig.canned_message.send_bell ? 1 : 0);
-            snprintf(buffer, sizeof(buffer), "%d left", charsLeft);
+            snprintf(buffer, sizeof(buffer), str_drawframe_carleft, charsLeft);
             display->drawString(x + display->getWidth() - display->getStringWidth(buffer), y + 0, buffer);
         }
 
@@ -2192,7 +2193,7 @@ void CannedMessageModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *st
             display->setFont(FONT_SMALL);
             display->setTextAlignment(TEXT_ALIGN_LEFT);
 
-            const char *label = "Dest: Shift + ";
+            const char *label = str_drawframe_destshift;
             int16_t labelW = display->getStringWidth(label);
 
             // triangle size visually matches glyph height, not full line height
@@ -2342,19 +2343,19 @@ static const char *getSignalGrade(float snr, int32_t rssi, float snrLimit, int &
     // 5-bar logic: strength inside Good/Fair/Bad category
     if (snr > snrLimit && rssi > -10) {
         bars = 5; // very strong good
-        return "Good";
+        return str_getsiggrade_good1;
     } else if (snr > snrLimit && rssi > -20) {
         bars = 4; // normal good
-        return "Good";
+        return str_getsiggrade_good2;
     } else if (snr > 0 && rssi > -50) {
         bars = 3; // weaker good (on edge of fair)
-        return "Good";
+        return str_getsiggrade_good3;
     } else if (snr > -10 && rssi > -100) {
         bars = 2; // fair
-        return "Fair";
+        return str_getsiggrade_fair;
     } else {
         bars = 1; // bad
-        return "Bad";
+        return str_getsiggrade_bad;
     }
 }
 
@@ -2452,22 +2453,22 @@ ProcessMessage CannedMessageModule::handleReceived(const meshtastic_MeshPacket &
 
                 if (this->ack) {
                     if (this->lastSentNode == NODENUM_BROADCAST) {
-                        snprintf(buf, sizeof(buf), "Message sent to\n#%s\n\nSignal: %s",
+                        snprintf(buf, sizeof(buf), str_hndlreceived_msgsent,
                                  (channelName && channelName[0]) ? channelName : "unknown", qualityLabel);
                     } else {
-                        snprintf(buf, sizeof(buf), "DM sent to\n@%s\n\nSignal: %s",
+                        snprintf(buf, sizeof(buf), str_hndlreceived_dmsent,
                                  (nodeName && nodeName[0]) ? nodeName : "unknown", qualityLabel);
                     }
                 } else if (isAck && !isFromDest) {
                     // Relay ACK banner
-                    snprintf(buf, sizeof(buf), "DM Relayed\n(Status Unknown)\n%s\n\nSignal: %s",
+                    snprintf(buf, sizeof(buf), str_hndlreceived_dmrelayed,
                              (nodeName && nodeName[0]) ? nodeName : "unknown", qualityLabel);
                 } else {
                     if (this->lastSentNode == NODENUM_BROADCAST) {
-                        snprintf(buf, sizeof(buf), "Message failed to\n#%s",
+                        snprintf(buf, sizeof(buf), str_hndlreceived_msgfailed,
                                  (channelName && channelName[0]) ? channelName : "unknown");
                     } else {
-                        snprintf(buf, sizeof(buf), "DM failed to\n@%s", (nodeName && nodeName[0]) ? nodeName : "unknown");
+                        snprintf(buf, sizeof(buf), str_hndlreceived_dmfailed, (nodeName && nodeName[0]) ? nodeName : "unknown");
                     }
                 }
 
@@ -2517,7 +2518,7 @@ bool CannedMessageModule::saveProtoForModule()
  */
 void CannedMessageModule::installDefaultCannedMessageModuleConfig()
 {
-    strncpy(cannedMessageModuleConfig.messages, "Hi|Bye|Yes|No|Ok", sizeof(cannedMessageModuleConfig.messages));
+    strncpy(cannedMessageModuleConfig.messages, str_defaultcanmsg_msg, sizeof(cannedMessageModuleConfig.messages));
 }
 
 /**

@@ -24,6 +24,7 @@
 #ifdef ARCH_ESP32
 #include "esp_task_wdt.h"
 #endif
+#include <languages.h>
 
 using namespace meshtastic;
 
@@ -69,7 +70,7 @@ void NotificationRenderer::drawSSLScreen(OLEDDisplay *display, OLEDDisplayUiStat
 {
     display->setTextAlignment(TEXT_ALIGN_CENTER);
     display->setFont(FONT_SMALL);
-    display->drawString(64 + x, y, "Creating SSL certificate");
+    display->drawString(64 + x, y, str_sslscreen_msg);
 
 #ifdef ARCH_ESP32
     yield();
@@ -78,9 +79,9 @@ void NotificationRenderer::drawSSLScreen(OLEDDisplay *display, OLEDDisplayUiStat
 
     display->setFont(FONT_SMALL);
     if ((millis() / 1000) % 2) {
-        display->drawString(64 + x, FONT_HEIGHT_SMALL + y + 2, "Please wait . . .");
+        display->drawString(64 + x, FONT_HEIGHT_SMALL + y + 2, str_sslscreen_wait1);
     } else {
-        display->drawString(64 + x, FONT_HEIGHT_SMALL + y + 2, "Please wait . .  ");
+        display->drawString(64 + x, FONT_HEIGHT_SMALL + y + 2, str_sslscreen_wait2);
     }
 }
 
@@ -531,7 +532,7 @@ void NotificationRenderer::drawNotificationBox(OLEDDisplay *display, OLEDDisplay
 
         // Consider extra width for signal bars on lines that contain "Signal:"
         uint16_t potentialWidth = lineWidths[lineCount];
-        if (graphics::bannerSignalBars >= 0 && strncmp(lines[lineCount], "Signal:", 7) == 0) {
+        if (graphics::bannerSignalBars >= 0 && strncmp(lines[lineCount], str_drawnotifybox_signal, 7) == 0) {
             const int totalBars = 5;
             const int barWidth = 3;
             const int barSpacing = 2;
@@ -544,7 +545,7 @@ void NotificationRenderer::drawNotificationBox(OLEDDisplay *display, OLEDDisplay
             widestLineWithBars = potentialWidth;
 
         if (!is_picker) {
-            needs_bell |= (strstr(alertBannerMessage, "Alert Received") != nullptr);
+            needs_bell |= (strstr(alertBannerMessage, str_drawnotifybox_alert) != nullptr);
             if (lineWidths[lineCount] > maxWidth)
                 maxWidth = lineWidths[lineCount];
         }
@@ -643,7 +644,7 @@ void NotificationRenderer::drawNotificationBox(OLEDDisplay *display, OLEDDisplay
         } else {
             // Pop-up
             // If this is the Signal line, center text + bars as one group
-            bool isSignalLine = (graphics::bannerSignalBars >= 0 && strstr(lineBuffer, "Signal:") != nullptr);
+            bool isSignalLine = (graphics::bannerSignalBars >= 0 && strstr(lineBuffer, str_drawnotifybox_signal) != nullptr);
             if (isSignalLine) {
                 const int totalBars = 5;
                 const int barWidth = 3;
@@ -710,23 +711,23 @@ void NotificationRenderer::drawCriticalFaultFrame(OLEDDisplay *display, OLEDDisp
     display->setFont(FONT_MEDIUM);
 
     char tempBuf[24];
-    snprintf(tempBuf, sizeof(tempBuf), "Critical fault #%d", error_code);
+    snprintf(tempBuf, sizeof(tempBuf), str_drawcritical_fault, error_code);
     display->drawString(0 + x, 0 + y, tempBuf);
     display->setTextAlignment(TEXT_ALIGN_LEFT);
     display->setFont(FONT_SMALL);
-    display->drawString(0 + x, FONT_HEIGHT_MEDIUM + y, "For help, please visit \nmeshtastic.org");
+    display->drawString(0 + x, FONT_HEIGHT_MEDIUM + y, str_drawcritical_help);
 }
 
 void NotificationRenderer::drawFrameFirmware(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y)
 {
     display->setTextAlignment(TEXT_ALIGN_CENTER);
     display->setFont(FONT_MEDIUM);
-    display->drawString(64 + x, y, "Updating");
+    display->drawString(64 + x, y, str_drawcritical_update);
 
     display->setFont(FONT_SMALL);
     display->setTextAlignment(TEXT_ALIGN_LEFT);
     display->drawStringMaxWidth(0 + x, 2 + y + FONT_HEIGHT_SMALL * 2, x + display->getWidth(),
-                                "Please be patient and do not power off.");
+                                str_drawcritical_please);
 }
 
 void NotificationRenderer::drawTextInput(OLEDDisplay *display, OLEDDisplayUiState *state)

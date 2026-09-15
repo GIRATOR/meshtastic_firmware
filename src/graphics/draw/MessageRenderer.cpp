@@ -17,6 +17,7 @@
 #include "meshUtils.h"
 #include <string>
 #include <vector>
+#include <languages.h>
 
 // External declarations
 extern bool hasUnreadMessage;
@@ -374,10 +375,10 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
 
     // Title string depending on mode
     char titleStr[48];
-    snprintf(titleStr, sizeof(titleStr), "Messages");
+    snprintf(titleStr, sizeof(titleStr), str_drawtxtmsgframe_messages);
     switch (currentMode) {
     case ThreadMode::ALL:
-        snprintf(titleStr, sizeof(titleStr), "Messages");
+        snprintf(titleStr, sizeof(titleStr), str_drawtxtmsgframe_messages);
         break;
     case ThreadMode::CHANNEL: {
         const char *cname = channels.getName(currentChannel);
@@ -406,12 +407,15 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
             resetScrollState();
             return; // Next draw will rerun in ALL mode
         }
-
         // Still in ALL mode and no messages at all → show placeholder
         graphics::drawCommonHeader(display, x, y, titleStr);
         didReset = false;
-        const char *messageString = "No messages";
-        int center_text = (SCREEN_WIDTH / 2) - (display->getStringWidth(messageString) / 2);
+        const char *messageString = str_drawtxtmsgframe_nomsg;
+        #if defined(OLED_UA) || defined(OLED_RU)
+            int center_text = (SCREEN_WIDTH / 2) - (display->getStringWidth(messageString, strlen(messageString), true) / 2);
+        #else
+            int center_text = (SCREEN_WIDTH / 2) - (display->getStringWidth(messageString) / 2);
+        #endif  
         display->drawString(center_text, getTextPositions(display)[2], messageString);
         graphics::drawCommonFooter(display, x, y);
         return;
@@ -464,7 +468,7 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
                 }
                 snprintf(chanType, sizeof(chanType), "#%s", name);
             } else {
-                snprintf(chanType, sizeof(chanType), "(DM)");
+                snprintf(chanType, sizeof(chanType), str_drawtxtmsgframe_dm);
             }
         }
 
@@ -499,13 +503,13 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
         if (invalidTime) {
             snprintf(timeBuf, sizeof(timeBuf), "???");
         } else if (seconds < 60) {
-            snprintf(timeBuf, sizeof(timeBuf), "%us", seconds);
+            snprintf(timeBuf, sizeof(timeBuf), str_drawtxtmsgframe_times, seconds);
         } else if (seconds < 3600) {
-            snprintf(timeBuf, sizeof(timeBuf), "%um", seconds / 60);
+            snprintf(timeBuf, sizeof(timeBuf), str_drawtxtmsgframe_timem, seconds / 60);
         } else if (seconds < 86400) {
-            snprintf(timeBuf, sizeof(timeBuf), "%uh", seconds / 3600);
+            snprintf(timeBuf, sizeof(timeBuf), str_drawtxtmsgframe_timeh, seconds / 3600);
         } else {
-            snprintf(timeBuf, sizeof(timeBuf), "%ud", seconds / 86400);
+            snprintf(timeBuf, sizeof(timeBuf), str_drawtxtmsgframe_timed, seconds / 86400);
         }
 
         // Build header line for this message
@@ -554,10 +558,10 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
         char headerStr[128];
         if (mine) {
             if (currentMode == ThreadMode::ALL) {
-                if (strcmp(chanType, "(DM)") == 0) {
-                    snprintf(headerStr, sizeof(headerStr), "%s to %s", timeBuf, truncatedSender);
+                if (strcmp(chanType, str_drawtxtmsgframe_dm) == 0) {
+                    snprintf(headerStr, sizeof(headerStr), str_drawtxtmsgframe_stos, timeBuf, truncatedSender);
                 } else {
-                    snprintf(headerStr, sizeof(headerStr), "%s to %s", timeBuf, chanType);
+                    snprintf(headerStr, sizeof(headerStr), str_drawtxtmsgframe_stos, timeBuf, chanType);
                 }
             } else {
                 snprintf(headerStr, sizeof(headerStr), "%s", timeBuf);
@@ -986,9 +990,9 @@ void handleNewMessage(OLEDDisplay *display, const StoredMessage &sm, const mesht
 
         if (isAlert) {
             if (truncatedLongName[0])
-                snprintf(banner, sizeof(banner), "Alert Received from\n%s", truncatedLongName);
+                snprintf(banner, sizeof(banner), str_drawtxtmsgframe_alertfrom, truncatedLongName);
             else
-                strcpy(banner, "Alert Received");
+                strcpy(banner, str_drawtxtmsgframe_alertrcvd);
         } else {
             // Skip muted channels unless it's an alert
             if (isChannelMuted)
@@ -996,12 +1000,12 @@ void handleNewMessage(OLEDDisplay *display, const StoredMessage &sm, const mesht
 
             if (truncatedLongName[0]) {
                 if (currentResolution == ScreenResolution::UltraLow) {
-                    strcpy(banner, "New Message");
+                    strcpy(banner, str_drawtxtmsgframe_newmsg);
                 } else {
-                    snprintf(banner, sizeof(banner), "New Message from\n%s", truncatedLongName);
+                    snprintf(banner, sizeof(banner), str_drawtxtmsgframe_msgfrom, truncatedLongName);
                 }
             } else
-                strcpy(banner, "New Message");
+                strcpy(banner, str_drawtxtmsgframe_newmsg);
         }
 
         // Append context (which channel or DM) so the banner shows where the message arrived
@@ -1010,9 +1014,9 @@ void handleNewMessage(OLEDDisplay *display, const StoredMessage &sm, const mesht
             if (sm.type == MessageType::BROADCAST) {
                 const char *cname = channels.getName(sm.channelIndex);
                 if (cname && cname[0])
-                    snprintf(contextBuf, sizeof(contextBuf), "in #%s", cname);
+                    snprintf(contextBuf, sizeof(contextBuf), str_drawtxtmsgframe_inns, cname);
                 else
-                    snprintf(contextBuf, sizeof(contextBuf), "in Ch%d", sm.channelIndex);
+                    snprintf(contextBuf, sizeof(contextBuf), str_drawtxtmsgframe_inch, sm.channelIndex);
             }
 
             if (contextBuf[0]) {

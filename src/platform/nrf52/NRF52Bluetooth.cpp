@@ -9,6 +9,7 @@
 #include "mesh/mesh-pb-constants.h"
 #include <bluefruit.h>
 #include <utility/bonding.h>
+#include <languages.h>
 static BLEService meshBleService = BLEService(BLEUuid(MESH_SERVICE_UUID_16));
 static BLECharacteristic fromNum = BLECharacteristic(BLEUuid(FROMNUM_UUID_16));
 static BLECharacteristic fromRadio = BLECharacteristic(BLEUuid(FROMRADIO_UUID_16));
@@ -396,11 +397,11 @@ bool NRF52Bluetooth::onPairingPasskey(uint16_t conn_handle, uint8_t const passke
             int y_offset = display->height() <= 80 ? 0 : 12;
             display->setTextAlignment(TEXT_ALIGN_CENTER);
             display->setFont(FONT_MEDIUM);
-            display->drawString(x_offset + x, y_offset + y, "Bluetooth");
+            display->drawString(x_offset + x, y_offset + y, str_onpairpass_bluetooth);
 
             display->setFont(FONT_SMALL);
             y_offset = display->height() == 64 ? y_offset + FONT_HEIGHT_MEDIUM - 4 : y_offset + FONT_HEIGHT_MEDIUM + 5;
-            display->drawString(x_offset + x, y_offset + y, "Enter this code");
+            display->drawString(x_offset + x, y_offset + y, str_onpairpass_entercode);
 
             display->setFont(FONT_LARGE);
             String displayPin(btPIN);

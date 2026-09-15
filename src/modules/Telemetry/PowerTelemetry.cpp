@@ -22,6 +22,7 @@
 
 #include "graphics/ScreenFonts.h"
 #include <Throttle.h>
+#include <languages.h>
 
 static constexpr uint16_t TX_HISTORY_KEY_POWER_TELEMETRY = 0x8005;
 
@@ -122,14 +123,14 @@ void PowerTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *s
     int line = 1;
 
     // === Set Title
-    const char *titleStr = (graphics::currentResolution == graphics::ScreenResolution::High) ? "Power Telem." : "Power";
+    const char *titleStr = (graphics::currentResolution == graphics::ScreenResolution::High) ? str_powerteledraw_pwrtele : str_powerteledraw_pwr;
 
     // === Header ===
     graphics::drawCommonHeader(display, x, y, titleStr);
 
     if (lastMeasurementPacket == nullptr) {
         // In case of no valid packet, display "Power Telemetry", "No measurement"
-        display->drawString(x, graphics::getTextPositions(display)[line++], "No measurement");
+        display->drawString(x, graphics::getTextPositions(display)[line++], str_powerteledraw_nomeasure);
         return;
     }
 
@@ -140,14 +141,14 @@ void PowerTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *s
 
     const meshtastic_Data &p = lastMeasurementPacket->decoded;
     if (!pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &lastMeasurement)) {
-        display->drawString(x, graphics::getTextPositions(display)[line++], "Measurement Error");
+        display->drawString(x, graphics::getTextPositions(display)[line++], str_powerteledraw_measureerr);
         LOG_ERROR("Unable to decode last packet");
         return;
     }
 
     // Display "Pow. From: ..."
     char fromStr[64];
-    snprintf(fromStr, sizeof(fromStr), "Pow. From: %s (%us)", lastSender, agoSecs);
+    snprintf(fromStr, sizeof(fromStr), str_powerteledraw_powfrom, lastSender, agoSecs);
     display->drawString(x, graphics::getTextPositions(display)[line++], fromStr);
 
     // Display current and voltage based on ...power_metrics.has_[channel/voltage/current]... flags
@@ -156,7 +157,7 @@ void PowerTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *s
 
     auto drawLine = [&](const char *label, float voltage, float current) {
         char lineStr[64];
-        snprintf(lineStr, sizeof(lineStr), "%s: %.2fV %.0fmA", label, voltage, current);
+        snprintf(lineStr, sizeof(lineStr), str_powerteledraw_values, label, voltage, current);
         display->drawString(x, lineY, lineStr);
         lineY += _fontHeight(FONT_SMALL);
     };

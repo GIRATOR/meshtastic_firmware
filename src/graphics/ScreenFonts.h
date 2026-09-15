@@ -96,7 +96,7 @@
 #define FONT_SMALL FONT_MEDIUM_LOCAL // Height: 19
 #define FONT_MEDIUM FONT_LARGE_LOCAL // Height: 28
 #define FONT_LARGE FONT_LARGE_LOCAL  // Height: 28
-#elif defined(OLED_TINY)
+#elif (defined(OLED_TINY) || defined(USE_PCF8812))
 #define FONT_SMALL FONT_SMALL_LOCAL  // Height: 13
 #define FONT_MEDIUM FONT_SMALL_LOCAL // Height: 13
 #define FONT_LARGE FONT_SMALL_LOCAL  // Height: 13
