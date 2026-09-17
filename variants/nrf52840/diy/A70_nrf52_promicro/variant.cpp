@@ -22,12 +22,12 @@ void initVariant()
 void variant_shutdown()
 {
 #ifdef INPUTBROKER_ANALOG_TYPE
-    // Without power analog keyboard will not work, making it imposibble to wakeup device
-    // TODO: update/bodge pcb to feed keyboard divider LDO directly form battery
-    // digitalWrite(PIN_3V3_EN, LOW);
+    // Without power analog keyboard does not work, making it imposibble to wakeup device
+    // Disale anyway to save battery - wakes up on charger connected (or just reinsert battery)
+    digitalWrite(PIN_3V3_EN, LOW);
     
-    // only buttons high on divider will be able to wakeup device
-    // TODO: reroute pcb so "power" button has high enough level
+    // if power left on ^^^, buttons high on divider will be able to wakeup device
+    // TODO: reroute pcb so power button is highest value and works without divider
     nrf_gpio_pin_sense_t sense = NRF_GPIO_PIN_SENSE_HIGH; // trigger on high edge high edge
     nrf_gpio_cfg_sense_set(KEYBOARD_PIN, sense);          // end sleep interruption
 #else

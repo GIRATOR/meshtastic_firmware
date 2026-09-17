@@ -6,7 +6,11 @@
 #define str_loramenu_radio_preset       "Radio Preset"
 #define str_loramenu_frequency_slot     "Frequency Slot"
 #define str_loramenu_lora_lora          "LoRa"
+#define str_loramenu_lora_power         "Power"
+#define str_loramenu_lora_dutycycle     "Duty Cycle"
 #define str_loramenu_lora_region        "LoRa Region"
+#define str_loramenu_powerauto          "Max Legal"
+#define str_loramenu_txpower            "%lu dBm"
 
 #define str_onbmsg_ok                   "OK"
 #define str_onbmsg_gotit                "Got it!"
@@ -68,7 +72,6 @@
 #define str_replymenu_replytodm         "Reply to DM"
 #define str_replymenu_replytolastmsg    "Reply to Last Msg"
 
-
 #define str_delmsgmenu_back             "Back"
 #define str_delmsgmenu_deloldest        "Delete Oldest"
 #define str_delmsgmenu_delthischat      "Delete This Chat"
@@ -99,7 +102,6 @@
 #define str_txtmsgbasemenu_newprstmsg   "New Preset Msg"
 #define str_txtmsgbasemenu_newfreetxt   "New Freetext Msg"
 #define str_txtmsgbasemenu_msgaction    "Message Action"
-
 
 #define str_sysbasemenu_back            "Back"
 #define str_sysbasemenu_notifications   "Notifications"
@@ -380,6 +382,7 @@
 #define str_dbgrndr_usb                 "USB"
 #define str_dbgrndr_chutil              "ChUtil:"
 #define str_dbgrndr_chutil2             "ChUtil %2.0f%%"
+#define str_dbgrndr_txpower             "Power: %ludBm*%lu%%"  
 #define str_dbgrndr_lorainfo            "LoRa Info"
 #define str_dbgrndr_lora                "LoRa"
 #define str_dbgrndr_ble                 "BLE: %s"

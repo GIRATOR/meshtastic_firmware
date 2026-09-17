@@ -66,12 +66,12 @@ uint8_t test_count = 0;
 
 void menuHandler::loraMenu()
 {
-    static const char *optionsArray[] = {str_loramenu_back, str_loramenu_device_role, str_loramenu_radio_preset, str_loramenu_frequency_slot, str_loramenu_lora_region};
-    enum optionsNumbers { Back = 0, DeviceRolePicker = 1, RadioPresetPicker = 2, FrequencySlot = 3, LoraPicker = 4 };
+    static const char *optionsArray[] = {str_loramenu_back, str_loramenu_device_role, str_loramenu_radio_preset, str_loramenu_frequency_slot, str_loramenu_lora_power, str_loramenu_lora_dutycycle, str_loramenu_lora_region};
+    enum optionsNumbers { Back = 0, DeviceRolePicker = 1, RadioPresetPicker = 2, FrequencySlot = 3, PowerPicker = 4, DutyCyclePicker = 5, LoraPicker = 6 };
     BannerOverlayOptions bannerOptions;
     bannerOptions.message = str_loramenu_lora_lora;
     bannerOptions.optionsArrayPtr = optionsArray;
-    bannerOptions.optionsCount = 5;
+    bannerOptions.optionsCount = 7;
     bannerOptions.bannerCallback = [](int selected) -> void {
         if (selected == Back) {
             // No action
@@ -81,6 +81,10 @@ void menuHandler::loraMenu()
             menuHandler::menuQueue = menuHandler::RadioPresetPicker;
         } else if (selected == FrequencySlot) {
             menuHandler::menuQueue = menuHandler::FrequencySlot;
+        } else if (selected == PowerPicker) {
+                    menuHandler::menuQueue = menuHandler::PowerPickMenu;
+        } else if (selected == DutyCyclePicker) {
+                    menuHandler::menuQueue = menuHandler::DutyCyclePickMenu;
         } else if (selected == LoraPicker) {
             menuHandler::menuQueue = menuHandler::LoraPicker;
         }
@@ -200,7 +204,7 @@ void menuHandler::LoraRegionPicker(uint32_t duration)
             }
 
             service->reloadConfig(changes);
-            rebootAtMsec = (millis() + DEFAULT_REBOOT_SECONDS * 1000);
+            //rebootAtMsec = (millis() + DEFAULT_REBOOT_SECONDS * 1000);
         });
 
     bannerOptions.durationMs = duration;
@@ -308,9 +312,75 @@ void menuHandler::FrequencySlotPicker()
 
         config.lora.channel_num = selected;
         service->reloadConfig(SEGMENT_CONFIG);
-        rebootAtMsec = (millis() + DEFAULT_REBOOT_SECONDS * 1000);
+        //rebootAtMsec = (millis() + DEFAULT_REBOOT_SECONDS * 1000);
     };
 
+    screen->showOverlayBanner(bannerOptions);
+}
+
+void menuHandler::PowerPicker(){
+    enum ReplyOptions : int { Back = -1 };
+    constexpr int MAX_DBM = 42;
+    static const char *optionsArray[MAX_DBM];
+    static int optionsEnumArray[MAX_DBM];
+    static char powerText[MAX_DBM - 1][12];
+    int options = 0;
+    optionsArray[options] = str_slotpicker_back;
+    optionsEnumArray[options++] = Back;
+    optionsArray[options] = str_loramenu_powerauto;
+    optionsEnumArray[options++] = myRegion->powerLimit;
+    for (uint32_t tx_power = 1; tx_power <= MAX_DBM-2; tx_power++) {
+        //uint32_t power_mw = pow(10, (float)tx_power/(float)10);
+        snprintf(powerText[tx_power - 1], sizeof(powerText[tx_power - 1]), str_loramenu_txpower, (unsigned long)tx_power);
+        optionsArray[options] = powerText[tx_power - 1];
+        optionsEnumArray[options++] = (int)tx_power;
+    }
+    BannerOverlayOptions bannerOptions;
+    bannerOptions.message = str_loramenu_lora_power;
+    bannerOptions.optionsArrayPtr = optionsArray;
+    bannerOptions.optionsEnumPtr = optionsEnumArray;
+    bannerOptions.optionsCount = options;
+    bannerOptions.InitialSelected = 1; // always highlight legal limit
+    bannerOptions.bannerCallback = [](int selected) -> void {
+        if (selected == Back) {
+            menuHandler::menuQueue = menuHandler::LoraMenu;
+            screen->runNow();
+            return;
+        }
+        config.lora.tx_power = selected;
+        service->reloadConfig(SEGMENT_CONFIG);
+        //rebootAtMsec = (millis() + DEFAULT_REBOOT_SECONDS * 1000);
+    };
+    screen->showOverlayBanner(bannerOptions);
+}
+
+void menuHandler::DutyCyclePicker(){
+    enum ReplyOptions : int { Back = -1, Auto = 0, Override = 1 };
+    static const char *optionsArray[3];
+    static int optionsEnumArray[3];
+    optionsArray[0] = str_slotpicker_back;
+    optionsEnumArray[0] = Back;
+    optionsArray[1] = str_loramenu_powerauto;
+    optionsEnumArray[1] = Auto;
+    optionsArray[2] = "100%";
+    optionsEnumArray[2] = Override;
+
+    BannerOverlayOptions bannerOptions;
+    bannerOptions.message = str_loramenu_lora_dutycycle;
+    bannerOptions.optionsArrayPtr = optionsArray;
+    bannerOptions.optionsEnumPtr = optionsEnumArray;
+    bannerOptions.optionsCount = 3;
+    bannerOptions.InitialSelected = 1; // always highlight legal limit
+    bannerOptions.bannerCallback = [](int selected) -> void {
+        if (selected == Back) {
+            menuHandler::menuQueue = menuHandler::LoraMenu;
+            screen->runNow();
+            return;
+        }
+        config.lora.override_duty_cycle = (bool)selected; // 0 for auto and 1 for override
+        service->reloadConfig(SEGMENT_CONFIG);
+        //rebootAtMsec = (millis() + DEFAULT_REBOOT_SECONDS * 1000);
+    };
     screen->showOverlayBanner(bannerOptions);
 }
 
@@ -332,7 +402,7 @@ void menuHandler::radioPresetPicker()
     static std::array<const char *, presetCount> presetLabels{};
 
     auto bannerOptions =
-        createStaticBannerOptions("Radio Preset", presetOptions, presetLabels, [](const RadioPresetOption &option, int) -> void {
+        createStaticBannerOptions(str_loramenu_radio_preset, presetOptions, presetLabels, [](const RadioPresetOption &option, int) -> void {
             if (option.action == OptionsAction::Back) {
                 menuHandler::menuQueue = menuHandler::LoraMenu;
                 screen->runNow();
@@ -347,7 +417,7 @@ void menuHandler::radioPresetPicker()
             config.lora.channel_num = 0;        // Reset to default channel for the preset
             config.lora.override_frequency = 0; // Clear any custom frequency
             service->reloadConfig(SEGMENT_CONFIG);
-            rebootAtMsec = (millis() + DEFAULT_REBOOT_SECONDS * 1000);
+            //rebootAtMsec = (millis() + DEFAULT_REBOOT_SECONDS * 1000);
         });
 
     screen->showOverlayBanner(bannerOptions);
@@ -2748,6 +2818,12 @@ void menuHandler::handleMenuSwitch(OLEDDisplay *display)
         break;
     case FrequencySlot:
         FrequencySlotPicker();
+        break;
+    case PowerPickMenu:
+        PowerPicker();
+        break;
+    case DutyCyclePickMenu:
+        DutyCyclePicker();
         break;
     case NoTimeoutLoraPicker:
         LoraRegionPicker(0);

@@ -22,6 +22,7 @@
 #if HAS_WIFI && !defined(ARCH_PORTDUINO) || defined(MESHTASTIC_EXCLUDE_WIFI)
 #include "mesh/wifi/WiFiAPClient.h"
 #endif
+#include "buzz.h"
 
 #ifndef SLEEP_TIME
 #define SLEEP_TIME 30
@@ -68,6 +69,7 @@ static void sdsEnter()
 static void lowBattSDSEnter()
 {
     LOG_POWERFSM("State: Lower batt SDS");
+    play4ClickDown();
     doDeepSleep(Default::getConfiguredOrDefaultMs(config.power.sds_secs), false, true);
 }
 extern Power *power;

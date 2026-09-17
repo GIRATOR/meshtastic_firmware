@@ -31,6 +31,7 @@
 #ifdef ARCH_STM32WL
 #include "STM32WLE5JCInterface.h"
 #endif
+#include <languages.h>
 
 Observable<uint32_t> RadioInterface::loraRxPacketObservable;
 
@@ -53,7 +54,7 @@ const RegionInfo regions[] = {
         https://www.etsi.org/deliver/etsi_en/300200_300299/30022002/03.02.01_60/en_30022002v030201p.pdf
         FIXME: https://github.com/meshtastic/firmware/issues/3371
      */
-    RDEF(EU_433, 433.0f, 434.0f, 100, 0, 33, true, false, false),
+    RDEF(EU_433, 433.0f, 434.0f, 10, 0, 10, true, false, false),
 
     /*
        https://www.thethingsnetwork.org/docs/lorawan/duty-cycle/
@@ -69,7 +70,7 @@ const RegionInfo regions[] = {
        AFA) to avoid a duty cycle. (Please refer to line P page 22 of this document.)
        https://www.etsi.org/deliver/etsi_en/300200_300299/30022002/03.01.01_60/en_30022002v030101p.pdf
      */
-    RDEF(EU_868, 869.4f, 869.65f, 100, 0, 33, false, false, false),
+    RDEF(EU_868, 869.4f, 869.65f, 10, 0, 27, false, false, false),
 
     /*
         https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf
@@ -141,13 +142,13 @@ const RegionInfo regions[] = {
         433,05-434,7 Mhz 10 mW
         https://nkrzi.gov.ua/images/upload/256/5810/PDF_UUZ_19_01_2016.pdf
     */
-    RDEF(UA_433, 433.0f, 434.7f, 100, 0, 33, true, false, false),
+    RDEF(UA_433, 433.0f, 434.7f, 10, 0, 10, true, false, false),
 
     /*
         868,0-868,6 Mhz 25 mW
         https://nkrzi.gov.ua/images/upload/256/5810/PDF_UUZ_19_01_2016.pdf
     */
-    RDEF(UA_868, 868.0f, 868.6f, 100, 0, 33, true, false, false),
+    RDEF(UA_868, 868.0f, 868.6f, 1, 0, 14, true, false, false),
 
     /*
         Malaysia
@@ -482,7 +483,7 @@ std::unique_ptr<RadioInterface> initLoRa()
         if (rIf && !rIf->reconfigure()) {
             LOG_WARN("Reconfigure failed, rebooting");
             if (screen) {
-                screen->showSimpleBanner("Rebooting...");
+                screen->showSimpleBanner(str_rebootmenu_rebooting);
             }
             rebootAtMsec = millis() + 5000;
         }
@@ -830,9 +831,15 @@ void RadioInterface::applyModemConfig()
     }
 
     power = loraConfig.tx_power;
-
-    if ((power == 0) || ((power > myRegion->powerLimit) && !devicestate.owner.is_licensed))
-        power = myRegion->powerLimit;
+    #if (TXPOWERLIMIT_ALLOWBYPASS == 0)
+        if ((power == 0) || ((power > myRegion->powerLimit) && !devicestate.owner.is_licensed))
+            power = myRegion->powerLimit;
+    #elif (TXPOWERLIMIT_RESETONREBOOT > 0)
+        if (millis() < TXPOWERLIMIT_RESETONREBOOT){
+            if ((power == 0) || ((power > myRegion->powerLimit) && !devicestate.owner.is_licensed))
+                power = myRegion->powerLimit;
+        }
+    #endif
 
     if (power == 0)
         power = 17; // Default to this power level if we don't have a valid regional power limit (powerLimit of myRegion defaults

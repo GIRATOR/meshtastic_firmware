@@ -95,9 +95,10 @@ https://github.com/GIRATOR/meshtastic_firmware
 #define BATTERY_SENSE_RESOLUTION_BITS 12
 #define BATTERY_SENSE_RESOLUTION 4096.0
 #undef  AREF_VOLTAGE
-#define AREF_VOLTAGE 5.679
+#define AREF_VOLTAGE 1.8
 #define VBAT_AR_INTERNAL AR_INTERNAL_1_8
-#define ADC_MULTIPLIER (1.0F)
+#define ADC_MULTIPLIER (3.155F)
+#define OCV_ARRAY 4150, 4050, 3970, 3900, 3830, 3750, 3670, 3580, 3480, 3370, 3250
 
 // Custom keyboard
 #define INPUTBROKER_ANALOG_TYPE 1
@@ -163,6 +164,13 @@ https://github.com/GIRATOR/meshtastic_firmware
 
 #define SX126X_DIO3_TCXO_VOLTAGE 1.8
 #define TCXO_OPTIONAL // make it so that the firmware can try both TCXO and XTAL
+
+// allow exceeding ""legal"" power limit
+#define TXPOWERLIMIT_ALLOWBYPASS   1 
+// prevents exceeding ""legal"" power limit for set period of time
+// set 0 to disable, set > then complete boot time to "reset power on next reboot"
+// works as intended only from OLED menu, as apps force reboot after settings change
+#define TXPOWERLIMIT_RESETONREBOOT 0 // (ms)
 
 #ifdef __cplusplus
 }

@@ -1217,7 +1217,7 @@ void loop()
         } else {
             LOG_WARN("Reconfigure failed, rebooting");
             if (screen) {
-                screen->showSimpleBanner("Rebooting...");
+                screen->showSimpleBanner(str_rebootmenu_rebooting);
             }
             rebootAtMsec = millis() + 25;
         }

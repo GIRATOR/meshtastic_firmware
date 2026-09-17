@@ -14,6 +14,8 @@ class menuHandler
         DeviceRolePicker,
         RadioPresetPicker,
         FrequencySlot,
+        PowerPickMenu,
+        DutyCyclePickMenu,
         NoTimeoutLoraPicker,
         TzPicker,
         TwelveHourPicker,
@@ -66,6 +68,8 @@ class menuHandler
     static void deviceRolePicker();
     static void radioPresetPicker();
     static void FrequencySlotPicker();
+    static void PowerPicker();
+    static void DutyCyclePicker();
     static void handleMenuSwitch(OLEDDisplay *display);
     static void showConfirmationBanner(const char *message, std::function<void()> onConfirm);
     static void clockMenu();

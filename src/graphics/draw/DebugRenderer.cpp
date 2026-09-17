@@ -467,6 +467,27 @@ void drawLoRaFocused(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x,
     nameX = (SCREEN_WIDTH - textWidth) / 2;
     display->drawString(nameX, getTextPositions(display)[line++], frequencyslot);
 
+/* channel utilisation is displayed at home page
+   replace it with power / duty cycle instead */
+#if !defined(OLED_TINY)
+    // === Fifth Row: tx power ===
+    static char powerText[32];
+    uint32_t tx_power = config.lora.tx_power;
+    uint32_t tx_dc = myRegion->dutyCycle;
+    if (config.lora.override_duty_cycle)
+        tx_dc = 100;
+    snprintf(powerText, sizeof(powerText), str_dbgrndr_txpower, (unsigned long)tx_power, (unsigned long)tx_dc);
+
+    #if defined(OLED_UA) || defined(OLED_RU)
+        int txpow_x = (currentResolution == ScreenResolution::High) ? display->getStringWidth(powerText, strlen(powerText), true) + 10
+                                                                    : display->getStringWidth(powerText, strlen(powerText), true) + 5;
+    #else
+        int txpow_x = (currentResolution == ScreenResolution::High) ? display->getStringWidth(powerText) + 10
+                                                                    : display->getStringWidth(powerText) + 5;
+    #endif 
+    display->drawString((SCREEN_WIDTH / 2) - (txpow_x / 2), getTextPositions(display)[line], powerText);
+#endif
+/*  
 #if !defined(OLED_TINY)
     // === Fifth Row: Channel Utilization ===
     const char *chUtil = str_dbgrndr_chutil;
@@ -537,6 +558,7 @@ void drawLoRaFocused(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x,
     display->drawString(starting_position + chUtil_x + chutil_bar_width + extraoffset, getTextPositions(display)[line++],
                         chUtilPercentage);
 #endif
+*/
     graphics::drawCommonFooter(display, x, y);
 }
 
