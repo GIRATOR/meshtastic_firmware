@@ -864,7 +864,7 @@ void UIRenderer::drawDeviceFocused(OLEDDisplay *display, OLEDDisplayUiState *sta
 #if defined(USE_EINK)
         chutil_bar_width = (currentResolution == ScreenResolution::High) ? 50 : 30;
 #elif defined(USE_PCF8812)
-        chutil_bar_width = 0;
+        chutil_bar_width = 46;
 #else
         chutil_bar_width = (currentResolution == ScreenResolution::High) ? 80 : 40;
 #endif
@@ -876,10 +876,6 @@ void UIRenderer::drawDeviceFocused(OLEDDisplay *display, OLEDDisplayUiState *sta
         extraoffset = (currentResolution == ScreenResolution::High) ? 6 : 1;
     }
     int chutil_percent = airTime->channelUtilizationPercent();
-
-    #ifdef USE_PCF8812 // too narrow
-        chutil_bar_width = 0;
-    #endif
 
     int centerofscreen = SCREEN_WIDTH / 2;
     
@@ -923,15 +919,13 @@ void UIRenderer::drawDeviceFocused(OLEDDisplay *display, OLEDDisplayUiState *sta
         fillRight = seg1 + seg2 + (seg3 * ((chutil_percent - milestone2) / (100 - milestone2)));
     }
 
-    #ifndef USE_PCF8812 // too narrow
-        // Draw outline
-        display->drawRect(starting_position + chUtil_x, chUtil_y, chutil_bar_width, chutil_bar_height);
+    // Draw outline
+    display->drawRect(starting_position + chUtil_x, chUtil_y, chutil_bar_width, chutil_bar_height);
 
-        // Fill progress
-        if (fillRight > 0) {
-            display->fillRect(starting_position + chUtil_x, chUtil_y, fillRight, chutil_bar_height);
-        }
-    #endif
+    // Fill progress
+    if (fillRight > 0) {
+        display->fillRect(starting_position + chUtil_x, chUtil_y, fillRight, chutil_bar_height);
+    }
 
     display->drawString(starting_position + chUtil_x + chutil_bar_width + extraoffset, getTextPositions(display)[line],
                         chUtilPercentage);

@@ -523,7 +523,7 @@
 
 #define str_drawdevfocused_bat6         "%01d.%02dV"
 #define str_drawdevfocused_usb          "УПШ"
-#define str_drawdevfocused_chutil       "Зав.Кан."
+#define str_drawdevfocused_chutil       "Зав."
 #define str_drawdevfocused_btoff        "БТ вимк."
 
 #define str_einkdeepsleep_sleeping      "Сплю"

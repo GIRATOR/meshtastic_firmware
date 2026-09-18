@@ -523,7 +523,7 @@
 
 #define str_drawdevfocused_bat6         "%01d.%02dV"
 #define str_drawdevfocused_usb          "USB"
-#define str_drawdevfocused_chutil       "ChUtil: "
+#define str_drawdevfocused_chutil       "Util"
 #define str_drawdevfocused_btoff        "BT off"
 
 #define str_einkdeepsleep_sleeping      "Sleeping"

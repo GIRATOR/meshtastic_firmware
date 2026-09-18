@@ -1407,13 +1407,40 @@ int32_t CannedMessageModule::runOnce()
             case 0x08: // backspace
                 if (this->freetext.length() > 0) {
                     if (this->cursor > 0) {
-                        if (this->cursor == this->freetext.length()) {
-                            this->freetext = this->freetext.substring(0, this->freetext.length() - 1);
-                        } else {
-                            this->freetext = this->freetext.substring(0, this->cursor - 1) +
-                                             this->freetext.substring(this->cursor, this->freetext.length());
+                        // check how much bytes to delete
+                        // logic taken from utf8CharLen in EmoteRenderer
+                        int8_t delbytes = 1;
+                        char tgtch;
+                        if (this->cursor >= 2){
+                            tgtch = freetext.c_str()[this->cursor - 2];
+                            if ((tgtch & 0xE0) == 0xC0)
+                                delbytes = 2;
                         }
-                        this->cursor--;
+                        if (this->cursor >= 3){
+                            tgtch = freetext.c_str()[this->cursor - 3];
+                            if ((tgtch & 0xF0) == 0xE0)
+                                delbytes = 3;
+                        }
+                        if (this->cursor >= 4){
+                            tgtch = freetext.c_str()[this->cursor - 4];
+                            if ((tgtch & 0xF8) == 0xF0)
+                                delbytes = 4;
+                        }                                   
+                        if(delbytes < this->cursor){
+                            if (this->cursor == this->freetext.length()) {
+                                this->freetext = this->freetext.substring(0, this->freetext.length() - delbytes);
+                            } else {
+                                this->freetext = this->freetext.substring(0, this->cursor - delbytes) +
+                                                this->freetext.substring(this->cursor, this->freetext.length());
+                            }
+                        }else{
+                            if (this->cursor == this->freetext.length()) {
+                                this->freetext = "";
+                            } else {
+                                this->freetext = this->freetext.substring(this->cursor, this->freetext.length());
+                            }
+                        }
+                        this->cursor = this->cursor - delbytes;
                     }
                 } else {
                 }

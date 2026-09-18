@@ -60,7 +60,7 @@ namespace graphics
         static int popupPage = 1;
         static int popupMaxPage = 1;
 
-        static const uint32_t POPUP_DURATION_MS = 1000; // 1 second visible
+        static const uint32_t POPUP_DURATION_MS = 500; // 1 second visible
 
         // =============================
         // Scrolling Logic
@@ -252,7 +252,12 @@ namespace graphics
             int rightEdge = x + columnWidth - timeOffset;
             if (timeStr[strlen(timeStr) - 1] == 'm') // Fix the fact that our fonts don't line up well all the time
                 rightEdge -= 1;
+            
+        #if defined(OLED_UA) || defined(OLED_RU)
+            int textWidth = display->getStringWidth(timeStr, strlen(timeStr), true);
+        #else
             int textWidth = display->getStringWidth(timeStr);
+        #endif   
             display->drawString(rightEdge - textWidth, y, timeStr);
         }
 
@@ -325,7 +330,11 @@ namespace graphics
             if (hopStr[0] != '\0')
             {
                 int rightEdge = x + columnWidth - hopOffset;
+            #if defined(OLED_UA) || defined(OLED_RU)
+                int textWidth = display->getStringWidth(hopStr, strlen(hopStr), true);
+            #else
                 int textWidth = display->getStringWidth(hopStr);
+            #endif 
                 display->drawString(rightEdge - textWidth, y, hopStr);
             }
         }
@@ -433,7 +442,11 @@ namespace graphics
                              ? (isLeftCol ? 7 : 10) // Offset for Wide Screens (Left Column:Right Column)
                              : (isLeftCol ? 4 : 7); // Offset for Narrow Screens (Left Column:Right Column)
             int rightEdge = x + columnWidth - offset;
+        #if defined(OLED_UA) || defined(OLED_RU)
+            int textWidth = display->getStringWidth(distanceLabel, strlen(distanceLabel), true);
+        #else
             int textWidth = display->getStringWidth(distanceLabel);
+        #endif 
             display->drawString(rightEdge - textWidth, y, distanceLabel);
         }
 
@@ -718,7 +731,11 @@ namespace graphics
 
                 // Box padding
                 int padding = 2;
+            #if defined(OLED_UA) || defined(OLED_RU)
+                int textW = display->getStringWidth(buf, strlen(buf), true);
+            #else
                 int textW = display->getStringWidth(buf);
+            #endif 
                 int textH = FONT_HEIGHT_SMALL;
                 int boxWidth = textW + padding * 3;
                 int boxHeight = textH + padding * 2;
