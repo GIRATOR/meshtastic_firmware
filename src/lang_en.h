@@ -105,6 +105,10 @@
 
 #define str_sysbasemenu_back            "Back"
 #define str_sysbasemenu_notifications   "Notifications"
+#define str_sysbasemenu_msgsound        "Msg. Sound"
+#define str_sysbasemenu_msgsounddm      "DM Sound"
+#define str_sysbasemenu_snddefault      "Default sound"
+#define str_sysbasemenu_sndnone         "None"
 #define str_sysbasemenu_displayoptions  "Display Options"
 #define str_sysbasemenu_bluetooth       "Bluetooth"
 #define str_sysbasemenu_bluetoothtgl    "Bluetooth Toggle"

@@ -34,7 +34,8 @@ typedef struct _meshtastic_DeviceProfile {
     meshtastic_Position fixed_position;
     /* Ringtone for ExternalNotification */
     bool has_ringtone;
-    char ringtone[231];
+    char ringtone[300];
+    char ringtoneDM[300];
     /* Predefined messages for CannedMessage */
     bool has_canned_messages;
     char canned_messages[201];

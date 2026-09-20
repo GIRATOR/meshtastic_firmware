@@ -74,7 +74,8 @@ class ExternalNotificationModule : public SinglePortModule, private concurrency:
     void stopNow();
 
     void handleGetRingtone(const meshtastic_MeshPacket &req, meshtastic_AdminMessage *response);
-    void handleSetRingtone(const char *from_msg);
+    void handleSetRingtone(const char *from_msg, int8_t id);
+    void demoRingtone(const char *from_msg);
 
   protected:
     /** Called to handle a particular incoming message

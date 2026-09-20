@@ -31,6 +31,8 @@ class menuHandler
         CompassPointNorthMenu,
         ResetNodeDbMenu,
         BuzzerModeMenuPicker,
+        SoundPicker,
+        SoundPickerDM,
         MuiPicker,
         TftColorMenuPicker,
         BrightnessPicker,
@@ -92,6 +94,7 @@ class menuHandler
     static void GPSUpdateIntervalMenu();
     static void GPSPositionBroadcastMenu();
     static void BuzzerModeMenu();
+    static void SoundsMenu(int8_t id);
     static void switchToMUIMenu();
     static void TFTColorPickerMenu(OLEDDisplay *display);
     static void nodeListMenu();

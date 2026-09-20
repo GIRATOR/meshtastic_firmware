@@ -319,18 +319,20 @@ void menuHandler::FrequencySlotPicker()
 }
 
 void menuHandler::PowerPicker(){
-    enum ReplyOptions : int { Back = -1 };
-    constexpr int MAX_DBM = 42;
-    static const char *optionsArray[MAX_DBM];
-    static int optionsEnumArray[MAX_DBM];
-    static char powerText[MAX_DBM - 1][12];
+    static const char *optionsArray[32];
+    static int optionsEnumArray[32];
+    static char powerText[30][10];
     int options = 0;
     optionsArray[options] = str_slotpicker_back;
-    optionsEnumArray[options++] = Back;
+    optionsEnumArray[options++] = -1;
     optionsArray[options] = str_loramenu_powerauto;
     optionsEnumArray[options++] = myRegion->powerLimit;
-    for (uint32_t tx_power = 1; tx_power <= MAX_DBM-2; tx_power++) {
-        //uint32_t power_mw = pow(10, (float)tx_power/(float)10);
+    int MAX_DBM = myRegion->powerLimit;
+#ifdef TXPOWERLIMIT_HWMAX
+    MAX_DBM = TXPOWERLIMIT_HWMAX;
+#endif
+    for (uint32_t tx_power = 1; tx_power <= MAX_DBM; tx_power++) {
+        if(MAX_DBM > 30) tx_power = min(tx_power + 1, MAX_DBM); // if huge power, increase steps
         snprintf(powerText[tx_power - 1], sizeof(powerText[tx_power - 1]), str_loramenu_txpower, (unsigned long)tx_power);
         optionsArray[options] = powerText[tx_power - 1];
         optionsEnumArray[options++] = (int)tx_power;
@@ -342,7 +344,7 @@ void menuHandler::PowerPicker(){
     bannerOptions.optionsCount = options;
     bannerOptions.InitialSelected = 1; // always highlight legal limit
     bannerOptions.bannerCallback = [](int selected) -> void {
-        if (selected == Back) {
+        if (selected == -1) {
             menuHandler::menuQueue = menuHandler::LoraMenu;
             screen->runNow();
             return;
@@ -1115,14 +1117,14 @@ void menuHandler::textMessageBaseMenu()
 
 void menuHandler::systemBaseMenu()
 {
-    enum optionsNumbers { Back, Notifications, ScreenOptions, Bluetooth, WiFiToggle, PowerMenu, Test, enumEnd };
+    enum optionsNumbers { Back, Notifications, ScreenOptions, Bluetooth, WiFiToggle, Sounds, SoundsDM, PowerMenu, Test, enumEnd };
     static const char *optionsArray[enumEnd] = {str_sysbasemenu_back};
     static int optionsEnumArray[enumEnd] = {Back};
     int options = 1;
 
     optionsArray[options] = str_sysbasemenu_notifications;
     optionsEnumArray[options++] = Notifications;
-
+    
     optionsArray[options] = str_sysbasemenu_displayoptions;
     optionsEnumArray[options++] = ScreenOptions;
 
@@ -1136,6 +1138,12 @@ void menuHandler::systemBaseMenu()
     optionsArray[options] = str_sysbasemenu_wifitgl;
     optionsEnumArray[options++] = WiFiToggle;
 #endif
+
+    optionsArray[options] = str_sysbasemenu_msgsound;
+    optionsEnumArray[options++] = Sounds;
+
+    optionsArray[options] = str_sysbasemenu_msgsounddm;
+    optionsEnumArray[options++] = SoundsDM;
 
     if (currentResolution == ScreenResolution::UltraLow) {
         optionsArray[options] = str_sysbasemenu_power;
@@ -1160,6 +1168,12 @@ void menuHandler::systemBaseMenu()
     bannerOptions.bannerCallback = [](int selected) -> void {
         if (selected == Notifications) {
             menuHandler::menuQueue = menuHandler::BuzzerModeMenuPicker;
+            screen->runNow();
+        } else if (selected == Sounds) {
+            menuHandler::menuQueue = menuHandler::SoundPicker;
+            screen->runNow();
+        } else if (selected == SoundsDM) {
+            menuHandler::menuQueue = menuHandler::SoundPickerDM;
             screen->runNow();
         } else if (selected == ScreenOptions) {
             menuHandler::menuQueue = menuHandler::ScreenOptionsMenu;
@@ -2016,11 +2030,18 @@ void menuHandler::bluetoothToggleMenu()
     bannerOptions.optionsArrayPtr = optionsArray;
     bannerOptions.optionsCount = 3;
     bannerOptions.bannerCallback = [](int selected) -> void {
-        if (selected == 0)
+// this was done via simulating input wtf?        
+        if (selected == 0){
             return;
-        else if (selected != (config.bluetooth.enabled ? 1 : 2)) {
-            InputEvent event = {.inputEvent = (input_broker_event)170, .kbchar = 170, .touchX = 0, .touchY = 0};
-            inputBroker->injectInputEvent(&event);
+        }else{
+            bool new_bt_state = (selected == 1); 
+            if (config.bluetooth.enabled != new_bt_state){
+                config.bluetooth.enabled = new_bt_state;
+                service->reloadConfig(SEGMENT_CONFIG);
+                IF_SCREEN(screen->showSimpleBanner((new_bt_state ? str_syscommodule_btonrebbot : str_syscommodule_btoffreboot), 3000));
+                rebootAtMsec = millis() + DEFAULT_REBOOT_SECONDS * 1000; 
+            }
+
         }
     };
     bannerOptions.InitialSelected = config.bluetooth.enabled ? 1 : 2;
@@ -2035,10 +2056,43 @@ void menuHandler::BuzzerModeMenu()
     bannerOptions.optionsArrayPtr = optionsArray;
     bannerOptions.optionsCount = 5;
     bannerOptions.bannerCallback = [](int selected) -> void {
+
         config.device.buzzer_mode = (meshtastic_Config_DeviceConfig_BuzzerMode)selected;
         service->reloadConfig(SEGMENT_CONFIG);
     };
     bannerOptions.InitialSelected = config.device.buzzer_mode;
+    screen->showOverlayBanner(bannerOptions);
+}
+
+void menuHandler::SoundsMenu(int8_t id = 0)
+{    
+    BannerOverlayOptions bannerOptions;
+    switch (id) {
+    case 0:
+        bannerOptions.message = str_sysbasemenu_msgsound;
+        break;
+    case 1:
+        bannerOptions.message = str_sysbasemenu_msgsounddm;
+        break;
+    } 
+#if (defined(CUSTOM_RTTL_COUNT) && (CUSTOM_RTTL_COUNT > 0) && defined(CUSTOM_RTTL))
+    static const char *optionsArray[CUSTOM_RTTL_COUNT];
+    const char *custom_rttl[CUSTOM_RTTL_COUNT][2] = CUSTOM_RTTL;
+    for (uint8_t rttlid = 0; rttlid < CUSTOM_RTTL_COUNT; rttlid++) {
+        optionsArray[rttlid] = custom_rttl[rttlid][0];
+    }
+    bannerOptions.optionsCount = CUSTOM_RTTL_COUNT;
+#else
+    static const char *optionsArray[1] = { str_sysbasemenu_snddefault }
+    bannerOptions.optionsCount = 1;
+#endif
+    bannerOptions.optionsArrayPtr = optionsArray;
+    bannerOptions.bannerCallback = [id](int selected) -> void {
+        const char *custom_rttl[CUSTOM_RTTL_COUNT][2] = CUSTOM_RTTL;
+        externalNotificationModule->handleSetRingtone(custom_rttl[selected][1], id);
+        externalNotificationModule->demoRingtone(custom_rttl[selected][1]);
+    };
+    
     screen->showOverlayBanner(bannerOptions);
 }
 
@@ -2875,6 +2929,12 @@ void menuHandler::handleMenuSwitch(OLEDDisplay *display)
     case BuzzerModeMenuPicker:
         BuzzerModeMenu();
         break;
+    case SoundPicker:
+        SoundsMenu(0);
+        break;   
+    case SoundPickerDM:
+        SoundsMenu(1);
+        break; 
     case MuiPicker:
         switchToMUIMenu();
         break;

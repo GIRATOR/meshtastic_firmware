@@ -14,7 +14,7 @@
 
 #ifdef str_drawiconscreen_tasticurl
     #undef str_drawiconscreen_tasticurl
-    #define str_drawiconscreen_tasticur "Siemens A70"
+    #define str_drawiconscreen_tasticurl "Siemens A70"
 #endif
 
 #ifdef __cplusplus
@@ -165,12 +165,36 @@ https://github.com/GIRATOR/meshtastic_firmware
 #define SX126X_DIO3_TCXO_VOLTAGE 1.8
 #define TCXO_OPTIONAL // make it so that the firmware can try both TCXO and XTAL
 
+// why, just why not instantly
+#define DEFAULT_REBOOT_SECONDS 1
+#define DEFAULT_SHUTDOWN_SECONDS 1
+
 // allow exceeding ""legal"" power limit
 #define TXPOWERLIMIT_ALLOWBYPASS   1 
 // prevents exceeding ""legal"" power limit for set period of time
 // set 0 to disable, set > then complete boot time to "reset power on next reboot"
 // works as intended only from OLED menu, as apps force reboot after settings change
 #define TXPOWERLIMIT_RESETONREBOOT 0 // (ms)
+// hardware power limit 
+#define TXPOWERLIMIT_HWMAX 33 // (dBm)
+
+// ringtones - disable screensaver to add more
+#define CUSTOM_RTTL_COUNT 15
+#define CUSTOM_RTTL {   {str_sysbasemenu_snddefault, USERPREFS_RINGTONE_RTTTL}, \
+                        {str_sysbasemenu_sndnone, "0:d=4,o=5,b=240:2p"}, \
+                        {"2 down",  "1:d=4,o=7,b=180:16b,32p,16g"}, \
+                        {"2 beep",  "2:d=4,o=7,b=240:16g,16p,8g"}, \
+                        {"2 up",    "3:d=4,o=7,b=180:16g6,32p,16g"}, \
+                        {"up down", "4:d=4,o=6,b=320:32d7,32p,32d7,8p,32d,32p,32d"}, \
+                        {"blinky",  "5:d=4,o=6,b=320:32b,32p,32b,8p,32g,32p,32g,8p,32d7,32p,32d7,8p,32d,32p,32d"}, \
+                        {"pacman",  "6:d=32,o=6,b=112:b.5,b.,f#.,d#.,b.,f#."}, \
+                        {"double",  "7:d=16,o=5,b=200:c7,f6,c6,c7,f6,c6"}, \
+                        {"triple",  "8:d=16,o=5,b=200:c6,f6,c7,c6,f6,c7,c6,f6,c7"}, \
+                        {"up",      "9:d=4,o=6,b=160:32c,32d,32e,32f,32g,32a,32b"}, \
+                        {"down",    "10:d=4,o=6,b=160:32b,32a,32g,32f,32e,32d,32c"}, \
+                        {"ring1",   "11:d=4,o=6,b=355:16a#5,16c6,16a#5,16c6,16a#5,16c6,4a#5"}, \
+                        {"ring2",   "12:d=4,o=7,b=355:16b6,16d7,16b6,16d7,16b6,16d7,16b6,16d7,4d7"}, \
+                        {"nokia",   "13:d=4,o=6,b=320:8e7,8d7,f#,g#,8c#7,8b,d,e,8b,8a,c#,e,2a"}, }    
 
 #ifdef __cplusplus
 }

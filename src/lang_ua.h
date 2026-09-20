@@ -105,6 +105,10 @@
 
 #define str_sysbasemenu_back            "Назад"
 #define str_sysbasemenu_notifications   "Сповіщення"
+#define str_sysbasemenu_msgsound        "Звук Повід."
+#define str_sysbasemenu_msgsounddm      "Звук Приват."
+#define str_sysbasemenu_snddefault      "Стандартний"
+#define str_sysbasemenu_sndnone         "Немає"
 #define str_sysbasemenu_displayoptions  "Нал.дисплею"
 #define str_sysbasemenu_bluetooth       "Блютус"
 #define str_sysbasemenu_bluetoothtgl    "Блютус ув/вим"

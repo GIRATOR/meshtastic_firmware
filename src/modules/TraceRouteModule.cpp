@@ -48,6 +48,9 @@ void TraceRouteModule::rebuildResultLines(OLEDDisplay *display)
 
     int start = 0;
     int textLength = resultText.length();
+    #ifdef USE_PCF8812
+        resultText.toLowerCase();
+    #endif
 
     while (start <= textLength) {
         int newlinePos = resultText.indexOf('\n', start);
@@ -203,10 +206,9 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
             if (r->route_count > 0) {
                 result += getNodeName(nodeDB->getNodeNum());
                 for (uint8_t i = 0; i < r->route_count; i++) {
-                    result += " > ";
+                    result += ">";
                     const char *name = getNodeName(r->route[i]);
-                    float snr =
-                        (i < r->snr_towards_count && r->snr_towards[i] != INT8_MIN) ? ((float)r->snr_towards[i] / 4.0f) : 0.0f;
+                    float snr = (i < r->snr_towards_count && r->snr_towards[i] != INT8_MIN) ? ((float)r->snr_towards[i] / 4.0f) : 0.0f;
                     result += name;
                     if (snr != 0.0f) {
                         result += "(";
@@ -214,7 +216,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                         result += str_alterRecievedpb_db;
                     }
                 }
-                result += " > ";
+                result += ">";
                 result += getNodeName(tracingNode);
                 if (r->snr_towards_count > 0 && r->snr_towards[r->snr_towards_count - 1] != INT8_MIN) {
                     result += "(";
@@ -225,7 +227,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
             } else {
                 // Direct connection (no intermediate hops)
                 result += getNodeName(nodeDB->getNodeNum());
-                result += " > ";
+                result += ">";
                 result += getNodeName(tracingNode);
                 if (r->snr_towards_count > 0 && r->snr_towards[0] != INT8_MIN) {
                     result += "(";
@@ -239,7 +241,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
             if (r->route_back_count > 0) {
                 result += getNodeName(tracingNode);
                 for (int8_t i = r->route_back_count - 1; i >= 0; i--) {
-                    result += " > ";
+                    result += ">";
                     const char *name = getNodeName(r->route_back[i]);
                     float snr = (i < r->snr_back_count && r->snr_back[i] != INT8_MIN) ? ((float)r->snr_back[i] / 4.0f) : 0.0f;
                     result += name;
@@ -250,7 +252,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                     }
                 }
                 // add initiator node
-                result += " > ";
+                result += ">";
                 result += getNodeName(nodeDB->getNodeNum());
                 if (r->snr_back_count > 0 && r->snr_back[r->snr_back_count - 1] != INT8_MIN) {
                     result += "(";
@@ -260,7 +262,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
             } else {
                 // Direct return path (no intermediate hops)
                 result += getNodeName(tracingNode);
-                result += " > ";
+                result += ">";
                 result += getNodeName(nodeDB->getNodeNum());
                 if (r->snr_back_count > 0 && r->snr_back[0] != INT8_MIN) {
                     result += "(";

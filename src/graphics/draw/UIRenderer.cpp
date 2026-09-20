@@ -771,7 +771,7 @@ void UIRenderer::drawDeviceFocused(OLEDDisplay *display, OLEDDisplayUiState *sta
 
     // Display Region and Channel Utilization
     #ifdef USE_PCF8812 // too narrow
-        drawNodes(display, x, getTextPositions(display)[line] + 2, nodeStatus, -1, true);
+        drawNodes(display, x, getTextPositions(display)[line] + 2, nodeStatus, -1, false);
     #else
         if (currentResolution == ScreenResolution::UltraLow) {
             drawNodes(display, x, getTextPositions(display)[line] + 2, nodeStatus, -1, false, str_drawdevfocused_online);
@@ -809,6 +809,9 @@ void UIRenderer::drawDeviceFocused(OLEDDisplay *display, OLEDDisplayUiState *sta
     } else {
         UIRenderer::drawGps(display, 0, getTextPositions(display)[line], gpsStatus);
     }
+#else
+    if (!config.bluetooth.enabled)
+        display->drawString(x, getTextPositions(display)[line], str_drawdevfocused_btoff);
 #endif
 
 #if defined(OLED_TINY)
@@ -930,13 +933,17 @@ void UIRenderer::drawDeviceFocused(OLEDDisplay *display, OLEDDisplayUiState *sta
     display->drawString(starting_position + chUtil_x + chutil_bar_width + extraoffset, getTextPositions(display)[line],
                         chUtilPercentage);
 
-    if (!config.bluetooth.enabled) {
-    #if defined(OLED_UA) || defined(OLED_RU)
-        display->drawString(SCREEN_WIDTH - display->getStringWidth(str_drawdevfocused_btoff, strlen(str_drawdevfocused_btoff), true), getTextPositions(display)[line], str_drawdevfocused_btoff);
-    #else
-        display->drawString(SCREEN_WIDTH - display->getStringWidth(str_drawdevfocused_btoff), getTextPositions(display)[line], str_drawdevfocused_btoff);
+#if HAS_GPS // when no gps it is rendered on its place
+    #ifndef USE_PCF8812 // does not fin anyway
+        if (!config.bluetooth.enabled) {
+        #if defined(OLED_UA) || defined(OLED_RU)
+            display->drawString(SCREEN_WIDTH - display->getStringWidth(str_drawdevfocused_btoff, strlen(str_drawdevfocused_btoff), true), getTextPositions(display)[line], str_drawdevfocused_btoff);
+        #else
+            display->drawString(SCREEN_WIDTH - display->getStringWidth(str_drawdevfocused_btoff), getTextPositions(display)[line], str_drawdevfocused_btoff);
+        #endif
+        }
     #endif
-    }
+#endif
 
     line += 1;
 

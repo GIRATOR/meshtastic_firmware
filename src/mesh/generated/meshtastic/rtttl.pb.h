@@ -13,7 +13,8 @@
 /* Canned message module configuration. */
 typedef struct _meshtastic_RTTTLConfig {
     /* Ringtone for PWM Buzzer in RTTTL Format. */
-    char ringtone[231];
+    char ringtone[298];
+    char ringtoneDM[298];
 } meshtastic_RTTTLConfig;
 
 
@@ -27,10 +28,12 @@ extern "C" {
 
 /* Field tags (for use in manual encoding/decoding) */
 #define meshtastic_RTTTLConfig_ringtone_tag      1
+#define meshtastic_RTTTLConfig_ringtoneDM_tag      2
 
 /* Struct field encoding specification for nanopb */
 #define meshtastic_RTTTLConfig_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, STRING,   ringtone,          1)
+X(a, STATIC,   SINGULAR, STRING,   ringtone,          1) \
+X(a, STATIC,   SINGULAR, STRING,   ringtoneDM,          2)
 #define meshtastic_RTTTLConfig_CALLBACK NULL
 #define meshtastic_RTTTLConfig_DEFAULT NULL
 
@@ -41,7 +44,7 @@ extern const pb_msgdesc_t meshtastic_RTTTLConfig_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define MESHTASTIC_MESHTASTIC_RTTTL_PB_H_MAX_SIZE meshtastic_RTTTLConfig_size
-#define meshtastic_RTTTLConfig_size              233
+#define meshtastic_RTTTLConfig_size              600
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -885,7 +885,7 @@ namespace graphics
         }
         void drawDistanceScreen(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y)
         {
-            const char *title = "Distance";
+            const char *title = str_getcurmodtit_distance;
             drawNodeListScreen(display, state, x, y, title, drawNodeDistance);
         }
 #endif

@@ -65,6 +65,8 @@ bool externalCurrentState[3] = {};
 
 uint32_t externalTurnedOn[3] = {};
 
+bool isDmToUs = false;
+
 static const char *rtttlConfigFile = "/prefs/ringtone.proto";
 
 int32_t ExternalNotificationModule::runOnce()
@@ -137,7 +139,12 @@ int32_t ExternalNotificationModule::runOnce()
             if (audioThread->isPlaying()) {
                 // Continue playing
             } else if (isNagging && (nagCycleCutoff >= millis())) {
-                audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtone));
+                if (isDmToUs){
+                    audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtoneDM));
+                }else{
+                    audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtone));
+                }
+
             }
             // we need fast updates to play the RTTTL
             delay = EXT_NOTIFICATION_FAST_THREAD_MS;
@@ -149,7 +156,12 @@ int32_t ExternalNotificationModule::runOnce()
                 rtttl::play();
             } else if (isNagging && (nagCycleCutoff >= millis())) {
                 // start the song again if we have time left
-                rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtone);
+                if (isDmToUs){
+                    rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtoneDM);
+                }else{
+                    rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtone);
+                }
+
             }
             // we need fast updates to play the RTTTL
             delay = EXT_NOTIFICATION_FAST_THREAD_MS;
@@ -316,6 +328,10 @@ ExternalNotificationModule::ExternalNotificationModule()
             memset(rtttlConfig.ringtone, 0, sizeof(rtttlConfig.ringtone));
             // The default ringtone is always loaded from userPrefs.jsonc
             strncpy(rtttlConfig.ringtone, USERPREFS_RINGTONE_RTTTL, sizeof(rtttlConfig.ringtone));
+            // secondary ringtone
+            memset(rtttlConfig.ringtoneDM, 0, sizeof(rtttlConfig.ringtoneDM));
+            // The default ringtone is always loaded from userPrefs.jsonc
+            strncpy(rtttlConfig.ringtoneDM, USERPREFS_RINGTONE_RTTTL, sizeof(rtttlConfig.ringtoneDM));            
         }
 
         LOG_INFO("Init External Notification Module");
@@ -381,7 +397,7 @@ ProcessMessage ExternalNotificationModule::handleReceived(const meshtastic_MeshP
             // If we receive a broadcast message, apply channel mute setting
             // If we receive a direct message and the receipent is us, apply DM mute setting
             // Else we just handle it as not muted.
-            const bool isDmToUs = !isBroadcast(mp.to) && isToUs(&mp);
+            isDmToUs = !isBroadcast(mp.to) && isToUs(&mp);
             bool is_muted = isDmToUs ? (sender && ((sender->bitfield & NODEINFO_BITFIELD_IS_MUTED_MASK) != 0))
                                      : (ch.settings.has_module_settings && ch.settings.module_settings.is_muted);
 
@@ -445,10 +461,18 @@ ProcessMessage ExternalNotificationModule::handleReceived(const meshtastic_MeshP
 
                     if (moduleConfig.external_notification.use_i2s_as_buzzer) {
 #ifdef HAS_I2S
-                        audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtone));
+                        if (isDmToUs){
+                            audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtoneDM));
+                        }else{
+                            audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtone));
+                        }
 #endif
                     } else if (moduleConfig.external_notification.use_pwm) {
-                        rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtone);
+                        if (isDmToUs){
+                            rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtoneDM);
+                        }else{
+                            rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtone);
+                        }
                     } else {
                         setExternalState(2, true);
                     }
@@ -488,7 +512,8 @@ AdminMessageHandleResult ExternalNotificationModule::handleAdminMessageForModule
 
     case meshtastic_AdminMessage_set_ringtone_message_tag:
         LOG_INFO("Client setting ringtone");
-        this->handleSetRingtone(request->set_canned_message_module_messages);
+        this->handleSetRingtone(request->set_canned_message_module_messages, 0);
+        this->handleSetRingtone(request->set_canned_message_module_messages, 1); // set both for now
         result = AdminMessageHandleResult::HANDLED;
         break;
 
@@ -508,19 +533,32 @@ void ExternalNotificationModule::handleGetRingtone(const meshtastic_MeshPacket &
     } // Don't send anything if not instructed to. Better than asserting.
 }
 
-void ExternalNotificationModule::handleSetRingtone(const char *from_msg)
+void ExternalNotificationModule::handleSetRingtone(const char *from_msg, int8_t id)
 {
-    int changed = 0;
-
     if (*from_msg) {
-        changed |= strcmp(rtttlConfig.ringtone, from_msg);
-        strncpy(rtttlConfig.ringtone, from_msg, sizeof(rtttlConfig.ringtone));
+        switch (id) {
+        case 0:
+            strncpy(rtttlConfig.ringtone, from_msg, sizeof(rtttlConfig.ringtone));
+            break;
+        case 1:
+            strncpy(rtttlConfig.ringtoneDM, from_msg, sizeof(rtttlConfig.ringtoneDM));
+            break;
+        }
         LOG_INFO("*** from_msg.text:%s", from_msg);
-    }
-
-    if (changed) {
         nodeDB->saveProto(rtttlConfigFile, meshtastic_RTTTLConfig_size, &meshtastic_RTTTLConfig_msg, &rtttlConfig);
     }
+}
+
+void ExternalNotificationModule::demoRingtone(const char *from_msg)
+{
+    if (moduleConfig.external_notification.use_i2s_as_buzzer) {
+#ifdef HAS_I2S
+        audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtone));
+#endif
+    } else if (moduleConfig.external_notification.use_pwm) {
+        rtttl::begin(config.device.buzzer_gpio, from_msg);
+    } 
+    setIntervalFromNow(0);
 }
 
 int ExternalNotificationModule::handleInputEvent(const InputEvent *event)

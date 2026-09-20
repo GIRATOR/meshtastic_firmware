@@ -402,8 +402,12 @@ void drawLoRaFocused(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x,
         int textWidth = display->getStringWidth(shortnameble);
     #endif 
     int nameX = (SCREEN_WIDTH - textWidth);
-    display->drawString(nameX, getTextPositions(display)[line++], shortnameble);
-
+    if (!config.bluetooth.enabled) {
+        display->drawString(nameX, getTextPositions(display)[line++], str_drawdevfocused_btoff);
+    }else{
+        display->drawString(nameX, getTextPositions(display)[line++], shortnameble);
+    }
+    
     // === Second Row: Role ===
     auto role = DisplayFormatters::getDeviceRole(config.device.role);
     char device_role[64];

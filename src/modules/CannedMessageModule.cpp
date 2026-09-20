@@ -1816,14 +1816,10 @@ void CannedMessageModule::drawAnalogFreeText(OLEDDisplay *display, int16_t x, in
     String str_bef_cur = this->freetext.substring(0, this->cursor) + "_";
     String str_aft_cur = this->freetext.substring(this->cursor);
     // text parts sizes
-    graphics::EmoteRenderer::LineMetrics line_metrics = graphics::EmoteRenderer::analyzeLine(display, str_bef_cur.c_str(), FONT_HEIGHT_SMALL, graphics::emotes, graphics::numEmotes, 2);
-    uint16_t bef_cur_len_px = line_metrics.width;
-    uint16_t max_height = line_metrics.tallestHeight;
-    line_metrics = graphics::EmoteRenderer::analyzeLine(display, str_aft_cur.c_str(), FONT_HEIGHT_SMALL, graphics::emotes, graphics::numEmotes, 2);
-    uint16_t aft_cur_len_px = line_metrics.width;
-    max_height = max(max_height, line_metrics.tallestHeight);
+    uint16_t bef_cur_len_px = display->getStringWidth(str_bef_cur.c_str(), strlen(str_bef_cur.c_str()), true);
+    uint16_t aft_cur_len_px = display->getStringWidth(str_aft_cur.c_str(), strlen(str_aft_cur.c_str()), true);
     uint16_t out_len_px = bef_cur_len_px + aft_cur_len_px;
-    uint16_t max_len_px = 2 * display->getWidth(); // fixed available space as we do only for PCF8812
+    uint16_t max_len_px = 1.75 * display->getWidth(); // fixed available space as we do only for PCF8812
 
     String msgWithCursor;
     if (out_len_px <= 2 * display->getWidth())
@@ -1861,38 +1857,25 @@ void CannedMessageModule::drawAnalogFreeText(OLEDDisplay *display, int16_t x, in
     
     display->drawHorizontalLine(0,display->getHeight() - FONT_HEIGHT_SMALL,display->getWidth());
 
-    String akb_stat = " ";
-    if(akb_is_locked)
+    if(!akb_is_locked && !akb_is_idle)
     {
-       akb_stat = "hold # to unlock";
-       display->drawString(0, display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
-    }
-    else
-    {
-        if(akb_is_idle)
+        String akb_stat = " ";
+        // button chars
+        for (uint8_t i=0; i<12; i=i+1)
         {
-            akb_stat = "press any key";
-            display->drawString(0, display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
-        }
-        else
-        {
-            // button chars
-            for (uint8_t i=0; i<12; i=i+1)
-            {
-                if (akb_pending[i] != 0x00)
-                    akb_stat = akb_stat + String(akb_pending[i]);
-            }            
-            display->drawString(0, display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
-            
-            // language and message size
-            uint16_t charsLeft = meshtastic_Constants_DATA_PAYLOAD_LEN - this->freetext.length() - (moduleConfig.canned_message.send_bell ? 1 : 0);
-            if (akb_lang > 0)
-                charsLeft = charsLeft/2;
-            akb_stat = String(akb_lang_name[0]) + String(akb_lang_name[1]) + ": " + String(charsLeft);
-            if (akb_is_shift == 0)
-                akb_stat.toLowerCase();    
-            display->drawString(display->getWidth() - display->getStringWidth(akb_stat), display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
-        }
+            if (akb_pending[i] != 0x00)
+                akb_stat = akb_stat + String(akb_pending[i]);
+        }            
+        display->drawString(0, display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
+        
+        // language and message size
+        uint16_t charsLeft = meshtastic_Constants_DATA_PAYLOAD_LEN - this->freetext.length() - (moduleConfig.canned_message.send_bell ? 1 : 0);
+        if (akb_lang > 0)
+            charsLeft = charsLeft/2;
+        akb_stat = String(akb_lang_name[0]) + String(akb_lang_name[1]) + ": " + String(charsLeft);
+        if (akb_is_shift == 0)
+            akb_stat.toLowerCase();    
+        display->drawString(display->getWidth() - display->getStringWidth(akb_stat), display->getHeight() - FONT_HEIGHT_SMALL, akb_stat);
     }
         
     return;    
