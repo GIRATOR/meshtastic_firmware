@@ -2688,7 +2688,7 @@ void menuHandler::frameTogglesMenu()
     optionsEnumArray[options++] = nodelist_hopsignal;
 #endif
 
-#if HAS_GPS
+//#if HAS_GPS // Screen.cpp diplays it with no gps, can't hide with this
 #ifndef USE_EINK
     optionsArray[options] = screen->isFrameHidden("nodelist_location") ? str_frametglmenu_showposlists : str_frametglmenu_hideposlists;
     optionsEnumArray[options++] = nodelist_location;
@@ -2701,7 +2701,7 @@ void menuHandler::frameTogglesMenu()
 
     optionsArray[options] = screen->isFrameHidden("gps") ? str_frametglmenu_showpos : str_frametglmenu_hidepos;
     optionsEnumArray[options++] = gps_position;
-#endif
+//#endif
 
     optionsArray[options] = screen->isFrameHidden("lora") ? str_frametglmenu_showlora : str_frametglmenu_hidelora;
     optionsEnumArray[options++] = lora;

@@ -49,7 +49,12 @@ class TraceRouteModule : public ProtobufModule<meshtastic_RouteDiscovery>,
 
     virtual int32_t runOnce() override;
 
+    int handleInputEvent(const InputEvent *event);
+
   private:
+    CallbackObserver<TraceRouteModule, const InputEvent *> inputObserver =
+        CallbackObserver<TraceRouteModule, const InputEvent *>(this, &TraceRouteModule::handleInputEvent);
+
     void setResultText(const String &text);
     void clearResultLines();
 #if HAS_SCREEN
@@ -76,10 +81,11 @@ class TraceRouteModule : public ProtobufModule<meshtastic_RouteDiscovery>,
     unsigned long lastTraceRouteTime = 0;
     unsigned long resultShowTime = 0;
     unsigned long cooldownMs = 30000;
-    unsigned long resultDisplayMs = 10000;
-    unsigned long trackingTimeoutMs = 10000;
+    unsigned long resultDisplayMs = 30000;
+    unsigned long trackingTimeoutMs = 30000;
     String bannerText;
     String resultText;
+    uint8_t scroll_offset = 0;
     std::vector<String> resultLines;
     bool resultLinesDirty = false;
     NodeNum tracingNode = 0;

@@ -48,9 +48,6 @@ void TraceRouteModule::rebuildResultLines(OLEDDisplay *display)
 
     int start = 0;
     int textLength = resultText.length();
-    #ifdef USE_PCF8812
-        resultText.toLowerCase();
-    #endif
 
     while (start <= textLength) {
         int newlinePos = resultText.indexOf('\n', start);
@@ -206,7 +203,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
             if (r->route_count > 0) {
                 result += getNodeName(nodeDB->getNodeNum());
                 for (uint8_t i = 0; i < r->route_count; i++) {
-                    result += ">";
+                    result += " > ";
                     const char *name = getNodeName(r->route[i]);
                     float snr = (i < r->snr_towards_count && r->snr_towards[i] != INT8_MIN) ? ((float)r->snr_towards[i] / 4.0f) : 0.0f;
                     result += name;
@@ -216,7 +213,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                         result += str_alterRecievedpb_db;
                     }
                 }
-                result += ">";
+                result += " > ";
                 result += getNodeName(tracingNode);
                 if (r->snr_towards_count > 0 && r->snr_towards[r->snr_towards_count - 1] != INT8_MIN) {
                     result += "(";
@@ -227,7 +224,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
             } else {
                 // Direct connection (no intermediate hops)
                 result += getNodeName(nodeDB->getNodeNum());
-                result += ">";
+                result += " > ";
                 result += getNodeName(tracingNode);
                 if (r->snr_towards_count > 0 && r->snr_towards[0] != INT8_MIN) {
                     result += "(";
@@ -241,7 +238,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
             if (r->route_back_count > 0) {
                 result += getNodeName(tracingNode);
                 for (int8_t i = r->route_back_count - 1; i >= 0; i--) {
-                    result += ">";
+                    result += " > ";
                     const char *name = getNodeName(r->route_back[i]);
                     float snr = (i < r->snr_back_count && r->snr_back[i] != INT8_MIN) ? ((float)r->snr_back[i] / 4.0f) : 0.0f;
                     result += name;
@@ -252,7 +249,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
                     }
                 }
                 // add initiator node
-                result += ">";
+                result += " > ";
                 result += getNodeName(nodeDB->getNodeNum());
                 if (r->snr_back_count > 0 && r->snr_back[r->snr_back_count - 1] != INT8_MIN) {
                     result += "(";
@@ -262,7 +259,7 @@ void TraceRouteModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtasti
             } else {
                 // Direct return path (no intermediate hops)
                 result += getNodeName(tracingNode);
-                result += ">";
+                result += " > ";
                 result += getNodeName(nodeDB->getNodeNum());
                 if (r->snr_back_count > 0 && r->snr_back[0] != INT8_MIN) {
                     result += "(";
@@ -498,6 +495,7 @@ TraceRouteModule::TraceRouteModule()
 {
     ourPortNum = meshtastic_PortNum_TRACEROUTE_APP;
     isPromiscuous = true; // We need to update the route even if it is not destined to us
+    this->inputObserver.observe(inputBroker);
 }
 
 const char *TraceRouteModule::getNodeName(NodeNum node)
@@ -811,8 +809,11 @@ void TraceRouteModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *state
             }
 
             int lineHeight = FONT_HEIGHT_SMALL + 1; // Use proper font height with 1px spacing
-            for (size_t i = 0; i < resultLines.size(); i++) {
-                int lineY = contentStartY + (i * lineHeight);
+            
+            scroll_offset = min(scroll_offset, resultLines.size() - 1);
+            
+            for (size_t i = scroll_offset; i < resultLines.size(); i++) {
+                int lineY = contentStartY + ((i - scroll_offset) * lineHeight);
                 if (lineY + FONT_HEIGHT_SMALL <= display->getHeight()) {
                     display->drawString(x + 2, lineY, resultLines[i]);
                 }
@@ -826,6 +827,32 @@ void TraceRouteModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *state
     }
 }
 #endif // HAS_SCREEN
+
+int TraceRouteModule::handleInputEvent(const InputEvent *event){
+    if (runState == TRACEROUTE_STATE_RESULT) {
+        if (event->inputEvent == INPUT_BROKER_UP) {
+            if (scroll_offset > 0)
+                scroll_offset = scroll_offset - 1;            
+            requestFocus();   
+        }else if (event->inputEvent == INPUT_BROKER_DOWN) {
+            scroll_offset = scroll_offset + 1;
+            requestFocus();
+        }else{
+            LOG_INFO("TraceRoute result display timeout, returning to IDLE");
+            runState = TRACEROUTE_STATE_IDLE;
+            resultText = "";
+            clearResultLines();
+            bannerText = "";
+            tracingNode = 0;
+        }
+        UIFrameEvent e;
+        e.action = UIFrameEvent::Action::REGENERATE_FRAMESET;
+        notifyObservers(&e);
+        return 1;
+    }
+    return 0;
+}
+
 int32_t TraceRouteModule::runOnce()
 {
     unsigned long now = millis();

@@ -518,7 +518,7 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
 
         char senderName[64] = "";
         if (node && node->has_user) {
-            if (node->user.long_name[0]) {
+            if ((config.display.use_long_node_name) && (node->user.long_name[0])){
                 strncpy(senderName, node->user.long_name, sizeof(senderName) - 1);
             } else if (node->user.short_name[0]) {
                 strncpy(senderName, node->user.short_name, sizeof(senderName) - 1);
@@ -549,6 +549,8 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
         // Shrink Sender name if needed
         int availWidth = (mine ? rightTextWidth : leftTextWidth) - display->getStringWidth(timeBuf) -
                          display->getStringWidth(chanType) - graphics::UIRenderer::measureStringWithEmotes(display, "   @...");
+        if(!config.display.use_long_node_name)                         
+            availWidth = display->getWidth(); // never shrink short name, its retarded to replace 3 characters of short name with 3 dots
         if (availWidth < 0)
             availWidth = 0;
         char truncatedSender[64];
