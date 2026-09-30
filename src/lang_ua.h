@@ -729,3 +729,7 @@
 #define str_hndltxtmsg_alert            "Нове оголошення"
 #define str_hndltxtmsg_msgfrom          "Повідомлення від\n%s"
 #define str_hndltxtmsg_newmsg           "Нове\nповідомлення"
+
+// modules/esp32/AerialAlertsUAModule.cpp
+#define str_aaua_start                  "Повітряна тривога в \n"
+#define str_aaua_end                    "Відбій повітряної тривоги в \n"

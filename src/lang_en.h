@@ -729,3 +729,7 @@
 #define str_hndltxtmsg_alert            "Alert Received"
 #define str_hndltxtmsg_msgfrom          "New Message from\n%s"
 #define str_hndltxtmsg_newmsg           "New Message"
+
+// modules/esp32/AerialAlertsUAModule.cpp
+#define str_aaua_start                  "Air raid alert in \n"
+#define str_aaua_end                    "Cancelled alert in \n"

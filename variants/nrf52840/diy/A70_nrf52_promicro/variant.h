@@ -173,7 +173,6 @@ https://github.com/GIRATOR/meshtastic_firmware
 #define TXPOWERLIMIT_ALLOWBYPASS   1 
 // prevents exceeding ""legal"" power limit for set period of time
 // set 0 to disable, set > then complete boot time to "reset power on next reboot"
-// works as intended only from OLED menu, as apps force reboot after settings change
 #define TXPOWERLIMIT_RESETONREBOOT 0 // (ms)
 // hardware power limit 
 #define TXPOWERLIMIT_HWMAX 33 // (dBm)

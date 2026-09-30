@@ -1,7 +1,9 @@
 #include "AnalogKeyboard.h"
 
 #include "configuration.h"
+#ifdef ARCH_NRF52
 #include "Nrf52SaadcLock.h"
+#endif
 #include "concurrency/LockGuard.h"
 #include "buzz.h"
 

@@ -602,6 +602,7 @@ bool TraceRouteModule::startTraceRoute(NodeNum node)
         // Set destination and port
         p->to = node;
         p->decoded.portnum = meshtastic_PortNum_TRACEROUTE_APP;
+        p->priority = meshtastic_MeshPacket_Priority_ACK;
         p->decoded.want_response = true;
 
         // Use reliable delivery for traceroute requests (which will be copied to traceroute responses by setReplyTo)

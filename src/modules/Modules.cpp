@@ -104,6 +104,11 @@
 #if defined(HAS_HARDWARE_WATCHDOG)
 #include "watchdog/watchdogThread.h"
 #endif
+
+#if defined(ARCH_ESP32) && HAS_NETWORKING && (AAUA_USE_MODULE > 0)
+#include "modules/esp32/AerialAlertsUAModule.h"
+#endif
+
 /**
  * Create module instances here.  If you are adding a new module, you must 'new' it here (or somewhere else)
  */
@@ -246,6 +251,11 @@ void setupModules()
     if (moduleConfig.has_range_test && moduleConfig.range_test.enabled)
         new RangeTestModule();
 #endif
+
+#if defined(ARCH_ESP32) && HAS_NETWORKING && (AAUA_USE_MODULE > 0)
+    new AAUAModule();
+#endif
+
 #if defined(HAS_HARDWARE_WATCHDOG)
     watchdogThread = new WatchdogThread();
 #endif

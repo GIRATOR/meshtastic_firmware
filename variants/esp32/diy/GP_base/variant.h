@@ -23,7 +23,6 @@ extern "C" {
 
 #define USE_RF95 // SX1278
 
-
 #define LORA_MISO 19 
 #define LORA_SCK 21  
 #define LORA_MOSI 23  
@@ -48,6 +47,17 @@ extern "C" {
 #define SX126X_DIO3_TCXO_VOLTAGE (1.8)
 
 #define TCXO_OPTIONAL // make it so that the firmware can try both TCXO and XTAL
+
+// allow exceeding ""legal"" power limit
+#define TXPOWERLIMIT_ALLOWBYPASS   1 
+// prevents exceeding ""legal"" power limit for set period of time
+// set 0 to disable, set > then complete boot time to "reset power on next reboot"
+#define TXPOWERLIMIT_RESETONREBOOT 0 // (ms)
+// hardware power limit 
+#define TXPOWERLIMIT_HWMAX 33 // (dBm)
+
+//Aerial Alerts module
+#define AAUA_USE_MODULE 1
 
 #ifdef __cplusplus
 }
