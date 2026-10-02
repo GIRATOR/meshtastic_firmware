@@ -26,6 +26,8 @@
 #include "nimble/nimble/host/include/host/ble_gap.h"
 #endif
 
+#include <languages.h>
+
 #if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C6)
 
 namespace

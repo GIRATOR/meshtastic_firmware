@@ -811,7 +811,7 @@ void TraceRouteModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *state
 
             int lineHeight = FONT_HEIGHT_SMALL + 1; // Use proper font height with 1px spacing
             
-            scroll_offset = min(scroll_offset, resultLines.size() - 1);
+            scroll_offset = min(scroll_offset, (uint8_t)(resultLines.size() - 1));
             
             for (size_t i = scroll_offset; i < resultLines.size(); i++) {
                 int lineY = contentStartY + ((i - scroll_offset) * lineHeight);

@@ -331,11 +331,11 @@ void menuHandler::PowerPicker(){
 #ifdef TXPOWERLIMIT_HWMAX
     MAX_DBM = TXPOWERLIMIT_HWMAX;
 #endif
-    for (uint32_t tx_power = 1; tx_power <= MAX_DBM; tx_power++) {
+    for (int tx_power = 1; tx_power <= MAX_DBM; tx_power++) {
         if(MAX_DBM > 30) tx_power = min(tx_power + 1, MAX_DBM); // if huge power, increase steps
         snprintf(powerText[tx_power - 1], sizeof(powerText[tx_power - 1]), str_loramenu_txpower, (unsigned long)tx_power);
         optionsArray[options] = powerText[tx_power - 1];
-        optionsEnumArray[options++] = (int)tx_power;
+        optionsEnumArray[options++] = tx_power;
     }
     BannerOverlayOptions bannerOptions;
     bannerOptions.message = str_loramenu_lora_power;
@@ -1117,7 +1117,11 @@ void menuHandler::textMessageBaseMenu()
 
 void menuHandler::systemBaseMenu()
 {
+#if (defined(CUSTOM_RTTL_COUNT) && (CUSTOM_RTTL_COUNT > 0) && defined(CUSTOM_RTTL))
     enum optionsNumbers { Back, Notifications, ScreenOptions, Bluetooth, WiFiToggle, Sounds, SoundsDM, PowerMenu, Test, enumEnd };
+#else
+    enum optionsNumbers { Back, Notifications, ScreenOptions, Bluetooth, WiFiToggle, Sounds, SoundsDM, PowerMenu, Test, enumEnd };
+#endif    
     static const char *optionsArray[enumEnd] = {str_sysbasemenu_back};
     static int optionsEnumArray[enumEnd] = {Back};
     int options = 1;
@@ -1138,12 +1142,13 @@ void menuHandler::systemBaseMenu()
     optionsArray[options] = str_sysbasemenu_wifitgl;
     optionsEnumArray[options++] = WiFiToggle;
 #endif
-
+#if (defined(CUSTOM_RTTL_COUNT) && (CUSTOM_RTTL_COUNT > 0) && defined(CUSTOM_RTTL))
     optionsArray[options] = str_sysbasemenu_msgsound;
     optionsEnumArray[options++] = Sounds;
 
     optionsArray[options] = str_sysbasemenu_msgsounddm;
     optionsEnumArray[options++] = SoundsDM;
+#endif
 
     if (currentResolution == ScreenResolution::UltraLow) {
         optionsArray[options] = str_sysbasemenu_power;
@@ -2066,6 +2071,7 @@ void menuHandler::BuzzerModeMenu()
 
 void menuHandler::SoundsMenu(int8_t id = 0)
 {    
+#if (defined(CUSTOM_RTTL_COUNT) && (CUSTOM_RTTL_COUNT > 0) && defined(CUSTOM_RTTL))
     BannerOverlayOptions bannerOptions;
     switch (id) {
     case 0:
@@ -2075,26 +2081,24 @@ void menuHandler::SoundsMenu(int8_t id = 0)
         bannerOptions.message = str_sysbasemenu_msgsounddm;
         break;
     } 
-#if (defined(CUSTOM_RTTL_COUNT) && (CUSTOM_RTTL_COUNT > 0) && defined(CUSTOM_RTTL))
     static const char *optionsArray[CUSTOM_RTTL_COUNT];
     const char *custom_rttl[CUSTOM_RTTL_COUNT][2] = CUSTOM_RTTL;
     for (uint8_t rttlid = 0; rttlid < CUSTOM_RTTL_COUNT; rttlid++) {
         optionsArray[rttlid] = custom_rttl[rttlid][0];
     }
     bannerOptions.optionsCount = CUSTOM_RTTL_COUNT;
-#else
-    static const char *optionsArray[1] = { str_sysbasemenu_snddefault }
-    bannerOptions.optionsCount = 1;
-#endif
     bannerOptions.optionsArrayPtr = optionsArray;
     bannerOptions.bannerCallback = [id](int selected) -> void {
         const char *custom_rttl[CUSTOM_RTTL_COUNT][2] = CUSTOM_RTTL;
         externalNotificationModule->handleSetRingtone(custom_rttl[selected][1], id);
         externalNotificationModule->demoRingtone(custom_rttl[selected][1]);
     };
-    
     screen->showOverlayBanner(bannerOptions);
+#else
+
+#endif
 }
+
 
 #if defined(USE_PCF8812)
 

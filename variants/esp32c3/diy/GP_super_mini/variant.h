@@ -31,6 +31,14 @@ extern "C" {
 
 #define TCXO_OPTIONAL // make it so that the firmware can try both TCXO and XTAL
 
+// allow exceeding ""legal"" power limit
+#define TXPOWERLIMIT_ALLOWBYPASS   1 
+// prevents exceeding ""legal"" power limit for set period of time
+// set 0 to disable, set > then complete boot time to "reset power on next reboot"
+#define TXPOWERLIMIT_RESETONREBOOT 0 // (ms)
+// hardware power limit 
+#define TXPOWERLIMIT_HWMAX 22 // (dBm)
+
 #ifdef __cplusplus
 }
 #endif
