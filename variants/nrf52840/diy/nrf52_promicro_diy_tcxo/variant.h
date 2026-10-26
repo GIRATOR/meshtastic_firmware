@@ -190,6 +190,14 @@ settings.
 #define PIN_EINK_RES (32 + 1)
 #define PIN_EINK_BUSY (32 + 6)
 
+// allow exceeding ""legal"" power limit
+#define TXPOWERLIMIT_ALLOWBYPASS   1 
+// prevents exceeding ""legal"" power limit for set period of time
+// set 0 to disable, set > then complete boot time to "reset power on next reboot"
+#define TXPOWERLIMIT_RESETONREBOOT 0 // (ms)
+// hardware power limit 
+#define TXPOWERLIMIT_HWMAX 22 // (dBm)
+
 #ifdef __cplusplus
 }
 #endif
