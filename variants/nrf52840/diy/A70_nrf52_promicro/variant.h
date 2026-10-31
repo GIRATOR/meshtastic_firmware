@@ -175,7 +175,7 @@ https://github.com/GIRATOR/meshtastic_firmware
 // set 0 to disable, set > then complete boot time to "reset power on next reboot"
 #define TXPOWERLIMIT_RESETONREBOOT 0 // (ms)
 // hardware power limit 
-#define TXPOWERLIMIT_HWMAX 33 // (dBm)
+#define TXPOWERLIMIT_HWMAX 20 // (dBm)
 
 // ringtones - disable screensaver to add more
 #define CUSTOM_RTTL_COUNT 15

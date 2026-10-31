@@ -8,7 +8,7 @@ extern "C" {
 #undef I2C_SDA
 #undef I2C_SCL
 
-#define TX_GAIN_LORA 8
+//#define TX_GAIN_LORA 8
 #define SX126X_MAX_POWER 22
 
 #define HAS_SCREEN 0
@@ -54,7 +54,7 @@ extern "C" {
 // set 0 to disable, set > then complete boot time to "reset power on next reboot"
 #define TXPOWERLIMIT_RESETONREBOOT 0 // (ms)
 // hardware power limit 
-#define TXPOWERLIMIT_HWMAX 33 // (dBm)
+#define TXPOWERLIMIT_HWMAX 20 // (dBm)
 
 //Aerial Alerts module
 #define AAUA_USE_MODULE 1

@@ -918,13 +918,25 @@ void RadioInterface::limitPower(int8_t loraMaxPower)
 {
     uint8_t maxPower = 255; // No limit
 
-    if (myRegion->powerLimit)
-        maxPower = myRegion->powerLimit;
-
-    if ((power > maxPower) && !devicestate.owner.is_licensed) {
-        LOG_INFO("Lower transmit power because of regulatory limits");
-        power = maxPower;
-    }
+    #if (TXPOWERLIMIT_ALLOWBYPASS == 0)
+        if ((power == 0) || ((power > myRegion->powerLimit) && !devicestate.owner.is_licensed)){
+            if (myRegion->powerLimit)
+                maxPower = myRegion->powerLimit;
+            if ((power > maxPower) && !devicestate.owner.is_licensed) {
+                LOG_INFO("Lower transmit power because of regulatory limits");
+                power = maxPower;
+            }
+        }
+    #elif (TXPOWERLIMIT_RESETONREBOOT > 0)
+        if (millis() < TXPOWERLIMIT_RESETONREBOOT){
+            if (myRegion->powerLimit)
+                maxPower = myRegion->powerLimit;
+            if ((power > maxPower) && !devicestate.owner.is_licensed) {
+                LOG_INFO("Lower transmit power because of regulatory limits");
+                power = maxPower;
+            }
+        }
+    #endif
 
 #if HAS_LORA_FEM
     if (!devicestate.owner.is_licensed) {
